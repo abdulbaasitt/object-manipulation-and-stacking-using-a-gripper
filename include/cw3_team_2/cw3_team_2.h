@@ -81,6 +81,7 @@
 #include <cw3_world_spawner/Task1Service.h>
 #include <cw3_world_spawner/Task2Service.h>
 #include <cw3_world_spawner/Task3Service.h>
+#include <cw3_world_spawner/TaskSetup.h>
 
 
 typedef pcl::PointXYZRGBA PointT;

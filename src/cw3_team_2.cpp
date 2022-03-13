@@ -96,7 +96,171 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   cw3_world_spawner::Task1Service::Response &response)
 {
   /* This service picks an object with a given pose and places it at a given pose */
+
+
+  //initializing variable to scan an area of the robot arm environment
+  float x_scan = 0.5;
+  float x_thrs_min = 0.20;
+  float y_scan = 0.35;
+  float y_thrs_min = 0.15;
+
+  // Scanning for the blue boxes at the first 3 scan locations:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan1;
+
+  for (int i = 0; i < 3; i++)
+  {
+    //function call setting the scan area to specific coordinate
+    scan1 = scan(scan1, x_scan, y_scan, 0.6);
+
+    //setting a threshold to store a centroid within a particular scan area
+    g_x_thrs_min = x_thrs_min;
+    g_y_thrs_min = y_thrs_min;
+    g_x_thrs_max = g_x_thrs_min + 0.6;
+    g_y_thrs_max = g_y_thrs_min + 0.3;
+    
+    //function call to move arm towards scan coordinates
+    bool scan1_success = moveArm(scan1);
+    
+    //updating the scan area for the next iteration
+    y_scan -= 0.35;
+    y_thrs_min -= 0.3;
+  }
   
+  // Scanning for the blue boxes at the 4th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan4;
+
+  //function call setting the scan area to specific coordinate
+  scan4 = scan(scan4, 0.233, -0.3, 0.6);
+
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = 0.1;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.1;
+  g_y_thrs_max = g_y_thrs_min + 0.3;
+
+  //function call to move arm towards scan coordinates  
+  bool scan4_success = moveArm(scan4);
+
+  
+  // Scanning for the blue boxes at the 5th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan5;
+
+  //function call setting the scan area to specific coordinate
+  scan5 = scan(scan5, -0.033, -0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.1;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.2;
+  g_y_thrs_max = g_y_thrs_min + 0.3;
+
+
+  //function call to move arm towards scan coordinates  
+  bool scan5_success = moveArm(scan5);
+  
+  
+  // Scanning for the blue boxes at the 6th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan6;
+
+  //function call setting the scan area to specific coordinate
+  scan6 = scan(scan6, -0.3, -0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates 
+  bool scan6_success = moveArm(scan6);
+
+
+  
+  // Scanning for the blue boxes at the 7th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan7;
+
+  //function call setting the scan area to specific coordinate
+  scan7 = scan(scan7, -0.3, 0.0, 0.6);
+
+  
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = -0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates
+  bool scan7_success = moveArm(scan7);
+  
+
+  
+  // Scanning for the blue boxes at the 8th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan8;
+
+  //function call setting the scan area to specific coordinate
+  scan8 = scan(scan8, -0.3, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+  //function call to move arm towards scan coordinates
+  bool scan8_success = moveArm(scan8);
+  
+
+  // Scanning for the blue boxes at the 9th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan9;
+
+  //function call setting the scan area to specific coordinate
+  scan9 = scan(scan9, -0.033, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.1;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.20;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+    
+
+  //function call to move arm towards scan coordinates
+  bool scan9_success = moveArm(scan9);
+
+
+  // Scanning for the blue boxes at the 10th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan10;
+
+  //function call setting the scan area to specific coordinate
+  scan10 = scan(scan10, 0.233, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = 0.1;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.10;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates 
+  bool scan10_success = moveArm(scan10);
   
   return true;
 }
