@@ -59,6 +59,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/features/normal_3d.h>
@@ -280,6 +281,15 @@ class Cw3Solution
     applyVX (PointCPtr &in_cloud_ptr,
              PointCPtr &out_cloud_ptr);
 
+    /** \brief Apply Pass Through filtering.
+      * 
+      * \input[in] in_cloud_ptr the input PointCloud2 pointer
+      * \input[out] out_cloud_ptr the output PointCloud2 pointer
+      */
+    void
+    applyPT (PointCPtr &in_cloud_ptr,
+             PointCPtr &out_cloud_ptr);
+
     /** \brief Apply Color filtering.
       * 
       * \input[in] in_cloud_ptr the input PointCloud2 pointer
@@ -288,6 +298,26 @@ class Cw3Solution
     void
     applyCF (PointCPtr &in_cloud_ptr,
              PointCPtr &out_cloud_ptr);
+
+
+    /** \brief Apply Black Color filtering.
+      * 
+      * \input[in] in_cloud_ptr the input PointCloud2 pointer
+      * \input[out] out_cloud_ptr the output PointCloud2 pointer
+      */
+    void
+    applyBCF (PointCPtr &in_cloud_ptr,
+             PointCPtr &out_cloud_ptr);
+
+    /** \brief Apply Floor filtering.
+      * 
+      * \input[in] in_cloud_ptr the input PointCloud2 pointer
+      * \input[out] out_cloud_ptr the output PointCloud2 pointer
+      */
+    void
+    applyFF (PointCPtr &in_cloud_ptr,
+             PointCPtr &out_cloud_ptr);
+    
     
     /** \brief Normal estimation.
       * 
@@ -421,6 +451,9 @@ class Cw3Solution
     /** \brief Voxel Grid filter. */
     pcl::VoxelGrid<PointT> g_vx;
     
+    /** \brief Pass Through filter. */
+    pcl::PassThrough<PointT> g_pt;
+    
     /** \brief  Min and Max y threshold sizes. */
     double g_y_thrs_min, g_y_thrs_max;
     
@@ -429,6 +462,9 @@ class Cw3Solution
     
     /** \brief Color filter. */
     pcl::ConditionalRemoval<PointT> g_cf;
+    
+    /** \brief Floor Filtering. */
+    pcl::ConditionalRemoval<PointT> g_ff;
 
     /** \brief Color filter rgb filter values. */
     double g_cf_red, g_cf_green, g_cf_blue;

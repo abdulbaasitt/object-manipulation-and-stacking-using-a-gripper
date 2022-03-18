@@ -666,6 +666,9 @@ Cw3Solution::cloudCallBackOne
 
   // Perform the filtering
   applyVX (g_cloud_ptr, g_cloud_filtered);
+  //applyPT (g_cloud_ptr, g_cloud_filtered);
+  //applyBCF (g_cloud_ptr, g_cloud_filtered);
+  applyFF (g_cloud_ptr, g_cloud_filtered);
   //applyCF (g_cloud_ptr, g_cloud_filtered);
   
   // Segment plane and cube
@@ -716,6 +719,19 @@ Cw3Solution::applyVX (PointCPtr &in_cloud_ptr,
   return;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+void
+Cw3Solution::applyPT (PointCPtr &in_cloud_ptr,
+                      PointCPtr &out_cloud_ptr)
+{
+  /*this is used to ...*/
+  g_pt.setInputCloud (in_cloud_ptr);
+  g_pt.setFilterFieldName ("x");
+  g_pt.setFilterLimits (0.03, 1000); //put in config ...
+  g_pt.filter (*out_cloud_ptr);
+  
+  return;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 void
@@ -731,7 +747,7 @@ Cw3Solution::applyCF (PointCPtr &in_cloud_ptr,
   pcl::ConditionAnd<PointT>::Ptr condition (new pcl::ConditionAnd<PointT> ());
 
 
-   // set the Lower bound for red conditional colour filter
+  // set the Lower bound for red conditional colour filter
   pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, g_cf_red-25.5));
   condition->addComparison (lb_red);
 
@@ -744,7 +760,7 @@ Cw3Solution::applyCF (PointCPtr &in_cloud_ptr,
   condition->addComparison (lb_blue);
 
  
- // set the upper bound for red conditional colour filter
+  // set the upper bound for red conditional colour filter
   pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, g_cf_red+25.5));
   condition->addComparison (ub_red);
 
@@ -759,6 +775,116 @@ Cw3Solution::applyCF (PointCPtr &in_cloud_ptr,
   g_cf.setInputCloud (in_cloud_ptr);
   g_cf.setCondition (condition);
   g_cf.filter (*out_cloud_ptr);
+  
+  return;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
+Cw3Solution::applyBCF (PointCPtr &in_cloud_ptr,
+                      PointCPtr &out_cloud_ptr)
+{
+
+
+  /* This function is used to apply a colour filter to a point cloud to remove black color*/
+  /*Need to put the 0.1 inside a config file*/
+
+  //determines if a point meets this condition
+  pcl::ConditionAnd<PointT>::Ptr condition (new pcl::ConditionAnd<PointT> ());
+
+  // set the Lower bound for red conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  condition->addComparison (lb_red);
+
+  // set the Lower bound for green conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  condition->addComparison (lb_green);
+
+  // set the Lower bound for blue conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  condition->addComparison (lb_blue);
+
+ 
+ // set the upper bound for red conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  condition->addComparison (ub_red);
+
+  // set the upper bound for green conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  condition->addComparison (ub_green);
+
+  // set the upper bound for green conditional colour filter
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  condition->addComparison (ub_blue);
+
+  g_cf.setInputCloud (in_cloud_ptr);
+  g_cf.setCondition (condition);
+  g_cf.filter (*out_cloud_ptr);
+  
+  return;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void
+Cw3Solution::applyFF (PointCPtr &in_cloud_ptr,
+                      PointCPtr &out_cloud_ptr)
+{
+
+
+  /* This function is used to apply a colour filter to a point cloud to remove the floor*/
+  /* Remove g_fseg later if not needed ...*/
+
+  // // Optional
+  // g_fseg.setOptimizeCoefficients (true);
+  // // Mandatory
+  // g_fseg.setModelType (pcl::SACMODEL_PLANE);
+  // g_fseg.setMethodType (pcl::SAC_RANSAC);
+  // g_fseg.setDistanceThreshold (0.01);
+
+  // g_fseg.setInputCloud (in_cloud_ptr);
+  // g_fseg.segment (*g_inliers_plane, *g_coeff_plane);
+
+
+  geometry_msgs::PointStamped pt_camera;
+  geometry_msgs::PointStamped pt_world;
+  double lb_x = 0.0;
+  double lb_y = 0.0;
+  double lb_z = 0.03;
+  pt_world.header.frame_id = "panda_link0";
+  pt_world.header.stamp = ros::Time (0);
+  pt_world.point.x = lb_x;
+  pt_world.point.y = lb_y;
+  pt_world.point.z = lb_z;
+  try
+  {
+    g_listener_.transformPoint (g_input_pc_frame_id_,
+                                pt_world,
+                                pt_camera);
+                                
+  }
+  catch (tf::TransformException& ex)
+  {
+    ROS_ERROR ("Received a trasnformation exception: %s", ex.what());
+  }
+  
+  lb_z = pt_camera.point.z;
+
+
+  //determines if a point meets this condition
+  pcl::ConditionAnd<PointT>::Ptr range_condition (new pcl::ConditionAnd<PointT> ());
+
+  pcl::FieldComparison<PointT>::ConstPtr ub(new pcl::FieldComparison<PointT>("z", pcl::ComparisonOps::LT, lb_z));
+  range_condition->addComparison (ub);
+
+  // pcl::FieldComparison<PointT>::ConstPtr lb(new pcl::FieldComparison<PointT>("z", pcl::ComparisonOps::GT, 100));
+  // range_condition->addComparison (lb);
+  // build the filter
+
+  g_ff.setCondition (range_condition);
+  g_ff.setInputCloud (in_cloud_ptr);
+  //g_ff.setKeepOrganized(true);
+  g_ff.filter (*out_cloud_ptr);
   
   return;
 }
@@ -806,20 +932,19 @@ Cw3Solution::segClusters (PointCPtr &in_cloud_ptr)
 
   /*this function is used to extract euclidean cluster*/
 
-  std::cout << "Number of data points in the unclustered PointCloud: " << in_cloud_ptr->size () << std::endl; 
+  std::cout << "Number of data points in the unclustered PointCloud: " << in_cloud_ptr->size () << std::endl;
 
   //To clear previous cluster indices
   g_cluster_indices.clear();
 
-  g_ec.setClusterTolerance (0.005); // 2cm
+  g_ec.setClusterTolerance (0.02); // 2cm
   
   //Minimum set so that half cut cubes are not classified as clusters
-  g_ec.setMinClusterSize (2000); 
-  g_ec.setMaxClusterSize (4000);
+  g_ec.setMinClusterSize (400);
+  g_ec.setMaxClusterSize (20000);
   g_ec.setSearchMethod (g_tree_ptr);
   g_ec.setInputCloud (in_cloud_ptr);
   g_ec.extract (g_cluster_indices);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
