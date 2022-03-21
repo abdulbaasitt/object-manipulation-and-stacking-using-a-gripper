@@ -138,6 +138,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   }
   size = centroids.size();
 
+  
   if (size > 0)
   {
       for (int i = 0; i < size; i++)
@@ -146,6 +147,15 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << centroids[i];
       }
   }
+
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+  geometry_msgs::Point newPoint;
+  newPoint.x = 0.5;
+  newPoint.y = 0.5;
+  newPoint.z = 0;
+
+  bool pickCubes = pickaAndPlaceCube(centroids, newPoint);
 
 }
 
@@ -216,6 +226,9 @@ Cw3Solution::findCentroidsAtScanLocation(std::vector<geometry_msgs::PointStamped
     }
 
   }
+  
+
+
   return centroids;
 
 }
@@ -242,7 +255,7 @@ Cw3Solution::pickaAndPlaceCube(std::vector<geometry_msgs::PointStamped> centroid
         geometry_msgs::Point position;
         position.x = (round(centroids[i].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
         position.y = (round(centroids[i].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-        position.z = 0.02; 
+        position.z = 0.02 + (0.04 * 4); 
 
         // function call to pick an object at the desired coordinate
         bool pick_success = pick(position);
