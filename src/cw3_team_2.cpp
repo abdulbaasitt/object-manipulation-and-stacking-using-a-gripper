@@ -165,6 +165,10 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << centroids_max_depth[i]  << std::endl;
         std::cout << "The min depth of this centroid is: "  << std::endl;
         std::cout << centroids_min_depth[i]  << std::endl;
+
+
+        std::cout << "The height of the cube is: "  << std::endl;
+        std::cout << g_number_of_cubes_in_stack  << std::endl;
       }
   }
 
@@ -236,7 +240,18 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   goal_loc.y = 0.5;
   goal_loc.z = 0;
 
-  bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
+  geometry_msgs::Pose check_col;
+  check_col.position = centroids[0].point;
+  check_col.position.y = check_col.position.y + 0.2;
+
+  check_col.orientation.x = 0.0;
+  check_col.orientation.y = 0.0;
+  check_col.orientation.z = -1.0;
+  check_col.orientation.w = 0.0;
+
+  moveArm(check_col);
+
+  // bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
 
 }
 
