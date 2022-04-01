@@ -168,14 +168,12 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
       }
   }
 
-  // FINDING ORIENTATION: CHANGE ...
+  // FINDING ORIENTATION:
+  float yaw = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
 
-  float hypo = sqrt(pow((centroids_max[0].x) - (g_current_centroid_max_y_x),2) + pow((g_current_centroid_max_x_y)-(centroids_max[0].y),2));
-  float theta = acos(((centroids_max[0].x) - (g_current_centroid_max_y_x))/(hypo));
-
-  // float theta = atan2(((centroids_max[0].y)-g_current_centroid_max_x_y),((centroids_max[0].x)-g_current_centroid_max_y_x));
+  // float yaw = atan2(((centroids_max[0].y)-g_current_centroid_max_x_y),((centroids_max[0].x)-g_current_centroid_max_y_x));
   std::cout << "The angle is: "  << std::endl;
-  std::cout << theta  << std::endl;
+  std::cout << yaw  << std::endl;
 
   //function call setting the scan area to coordinate where the stack was found
   scan1 = scan(scan1, centroids[0].point.x, centroids[0].point.y, 0.6);
@@ -226,14 +224,11 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
       }
   }
 
-  // FINDING ORIENTATION: CHANGE ...
+  // FINDING ORIENTATION:
+  yaw = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
 
-  hypo = sqrt(pow((centroids_max[0].x) - (g_current_centroid_max_y_x),2) + pow((g_current_centroid_max_x_y)-(centroids_max[0].y),2));
-  theta = acos(((centroids_max[0].x) - (g_current_centroid_max_y_x))/(hypo));
-
-  //theta = atan2(((centroids_max[0].y)-g_current_centroid_max_x_y),((centroids_max[0].x)-g_current_centroid_max_y_x));
   std::cout << "The angle is: "  << std::endl;
-  std::cout << theta  << std::endl;
+  std::cout << yaw  << std::endl;
 
 
   geometry_msgs::Point goal_loc;
