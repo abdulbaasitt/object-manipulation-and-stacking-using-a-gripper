@@ -35,8 +35,11 @@
 #ifndef Cw3_TEAM_2_H_
 #define Cw3_TEAM_2_H_
 
+#define _USE_MATH_DEFINES
+
 #include <ros/ros.h>
 #include <stdlib.h>
+#include <cmath>
 #include <iostream>
 
 // ROS includes
@@ -162,12 +165,11 @@ class Cw3Solution
 
     /** \brief function to find and store centroid found during scanning
       *
-      * \input[in] container to store the centroids
-      *  
-      * \return the centroid found during scan of a particular area
+      * ...
       */
     void
     findCentroidsAtScanLocation();
+
       
       /** \brief function to pick and place cube at particular centroid location
       *
@@ -443,6 +445,9 @@ class Cw3Solution
     /** \brief Stores number of cubes found in stack */
     int g_number_of_cubes_in_stack;
 
+    /** \brief Stores number of cubes found in recorded stack */
+    int g_number_of_cubes_in_recorded_stack;
+
     /** \brief Stores y coordinate corresponding to the max x bound of centroid */
     double g_current_centroid_max_x_y;
 
@@ -457,6 +462,9 @@ class Cw3Solution
 
     /** \brief All centroids found */
     std::vector<geometry_msgs::PointStamped> g_centroids;
+
+    /** \brief Colours of all cubes in the stack */
+    std::vector<std_msgs::ColorRGBA> g_current_stack_colours;
 
     /** \brief All max points of centroids found */
     std::vector<geometry_msgs::Point> g_centroids_max;

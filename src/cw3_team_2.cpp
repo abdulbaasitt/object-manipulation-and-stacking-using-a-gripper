@@ -142,6 +142,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
     y_thrs_min -= 0.30;
   }
   size = centroids.size();
+  g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
   
   if (size > 0)
   {
@@ -166,9 +167,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << "The min depth of this centroid is: "  << std::endl;
         std::cout << centroids_min_depth[i]  << std::endl;
 
-
-        std::cout << "The height of the cube is: "  << std::endl;
-        std::cout << g_number_of_cubes_in_stack  << std::endl;
+        std::cout << "The number of cubes in this stack is: "  << std::endl;
+        std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
       }
   }
 
@@ -202,6 +202,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   findCentroidsAtScanLocation();
 
   size = centroids.size();
+  g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
   
   if (size > 0)
   {
@@ -225,6 +226,9 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << centroids_max_depth[i]  << std::endl;
         std::cout << "The min depth of this centroid is: "  << std::endl;
         std::cout << centroids_min_depth[i]  << std::endl;
+
+        std::cout << "The number of cubes in this stack is: "  << std::endl;
+        std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
       }
   }
 
@@ -242,16 +246,43 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
-  check_col.position.y = check_col.position.y + 0.2;
+  check_col.position.y = check_col.position.y + 0.1;
+  check_col.position.z = 0.03 + ((0.04*g_number_of_cubes_in_recorded_stack)/2);
 
-  check_col.orientation.x = 0.0;
-  check_col.orientation.y = 0.0;
-  check_col.orientation.z = -1.0;
-  check_col.orientation.w = 0.0;
 
-  moveArm(check_col);
+  // define grasping as from above
+  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+
+  // determine the placing orientation
+  tf2::Quaternion q_object;
+  q_object.setRPY(0, -M_PI / 4, -M_PI / 2);
+  tf2::Quaternion q_result = q_x180deg * q_object;
+  geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
+  
+  check_col.orientation = orientation;
+
+  //moveArm(check_col);
 
   // bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
+
+
+  //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
+  g_sub_cloud;
+
+  g_current_stack_colours.size();
+  
+  if (size > 0)
+  {
+      for (int i = 0; i < size; i++)
+      {
+        std::cout << "This is the colour for cube: " + char(i)  << std::endl;
+        std::cout << "Red: " + char(g_current_stack_colours[i].r)  << std::endl;
+        std::cout << "Green: " + char(g_current_stack_colours[i].g)  << std::endl;
+        std::cout << "Blue: " + char(g_current_stack_colours[i].b)  << std::endl;
+
+      }
+  }
+
 
 }
 
@@ -285,6 +316,7 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   
   return true;
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void
@@ -344,7 +376,9 @@ Cw3Solution::findCentroidsAtScanLocation()
 
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
+
 bool
 Cw3Solution::pickaAndPlaceCube(std::vector<geometry_msgs::PointStamped> centroids, geometry_msgs::Point goal_loc)
 {
@@ -860,6 +894,7 @@ Cw3Solution::cloudCallBackOne
     g_current_centroid_max_x_y = 0.0;
     g_current_centroid_max_y_x = 0.0;
 
+
     for(int nIndex = 0; nIndex < cloud_world.size (); nIndex++)
     {
 
@@ -871,92 +906,40 @@ Cw3Solution::cloudCallBackOne
       {
         g_current_centroid_max_y_x = cloud_world[nIndex].x;
       }
+      if (g_number_of_cubes_in_recorded_stack>0)
+      {
+        //g_current_stack_colours.clear();
+        for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+        {
+          if(i>0)
+          {
+            if (((cloud_world[nIndex].z) < (0.03)+(i*0.04/2))&&((cloud_world[nIndex].z) > (0.03)+((i-1)*0.04/2)))
+            {
+              std_msgs::ColorRGBA Color;
+              Color.r = cloud_world[nIndex].r;
+              Color.g = cloud_world[nIndex].g;
+              Color.b = cloud_world[nIndex].b;
+              //g_current_stack_colours.emplace(g_current_stack_colours.begin()+i,Color);
+            }
+          }
+          else if((cloud_world[nIndex].z) < (0.03)+(i*0.04/2))
+          {
+            std_msgs::ColorRGBA Color;
+            Color.r = cloud_world[nIndex].r;
+            Color.g = cloud_world[nIndex].g;
+            Color.b = cloud_world[nIndex].b;
+            //g_current_stack_colours.emplace(g_current_stack_colours.begin()+i,Color);
+          }
+        }
+      }
+
+
 
     }
-
-
-
-
-
-
-    // //finding min and max depth points of the cluster
-    // PointT minPt, maxPt;
-    // pcl::getMinMax3D (*cloud_cluster, minPt, maxPt);
-
-
-
-
-    // geometry_msgs::PointStamped pt_camera;
-    // geometry_msgs::PointStamped pt_world;
-    // pt_camera.header.frame_id = g_input_pc_frame_id_;
-    // pt_camera.header.stamp = ros::Time (0);
-    // pt_camera.point.x = maxPt.x;
-    // pt_camera.point.y = maxPt.y;
-    // pt_camera.point.z = maxPt.z;
-    // try
-    // {
-    //   g_listener_.transformPoint ("panda_link0",
-    //                               pt_camera,
-    //                               pt_world);
-                                  
-    // }
-    // catch (tf::TransformException& ex)
-    // {
-    //   ROS_ERROR ("Received a trasnformation exception: %s", ex.what());
-    // }
-    
-    // g_current_centroid_max.x = pt_world.point.x;
-    // g_current_centroid_max.y = pt_world.point.y;
-    // g_current_centroid_max.z = pt_world.point.z;
-
-    // // g_current_centroid_max.x = maxPt.x;
-    // // g_current_centroid_max.y = maxPt.y;
-    // // g_current_centroid_max.z = maxPt.z;
-
-
-    // pt_camera.point.x = minPt.x;
-    // pt_camera.point.y = minPt.y;
-    // pt_camera.point.z = minPt.z;
-    // try
-    // {
-    //   g_listener_.transformPoint ("panda_link0",
-    //                               pt_camera,
-    //                               pt_world);
-                                  
-    // }
-    // catch (tf::TransformException& ex)
-    // {
-    //   ROS_ERROR ("Received a trasnformation exception: %s", ex.what());
-    // }
-    
-    // g_current_centroid_min.x = pt_world.point.x;
-    // g_current_centroid_min.y = pt_world.point.y;
-    // g_current_centroid_min.z = pt_world.point.z;
-
-    // g_current_centroid_min.x = minPt.x;
-    // g_current_centroid_min.y = minPt.y;
-    // g_current_centroid_min.z = minPt.z;
 
     g_current_centroid_max_depth = maxPt.z;
     g_current_centroid_min_depth = minPt.z;
 
-    // CHECK IF THIS CODE CAN BE USED TO FIT THE CUBE OR DELETE LATER
-    // //create publish object message
-    // object.header.frame_id =  "/camera_depth_frame";//需要修改
-    // object.header.stamp = currenttime;
-    // object.id = j;
-    // object.x = x/cloud_cluster->points.size();
-    // object.y = y/cloud_cluster->points.size();
-    // object.z = z/cloud_cluster->points.size();
-    // object.x_distance = maxPt.x - minPt.x;
-    // object.y_distance = maxPt.y - minPt.y;
-    // object.z_distance = maxPt.z - minPt.z;
-
-    //std::cout << "number:" << j << std::endl;
-    //std::cout << "position: ("<<object.x << "," << object.y << "," << object.z << ")" << std::endl;
-    
-    // //save the object to list
-    // ob_array.objects.push_back(object);
 
 
 
