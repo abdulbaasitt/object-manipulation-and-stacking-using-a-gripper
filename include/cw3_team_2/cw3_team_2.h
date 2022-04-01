@@ -69,6 +69,16 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl/conversions.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/common/common.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud_conversion.h>
+
+#include <iostream>
+#include <cstdlib>
 
 // TF specific includes
 #include <tf/transform_broadcaster.h>
@@ -156,8 +166,8 @@ class Cw3Solution
       *  
       * \return the centroid found during scan of a particular area
       */
-    std::vector<geometry_msgs::PointStamped>
-    findCentroidsAtScanLocation(std::vector<geometry_msgs::PointStamped> centroids);
+    void
+    findCentroidsAtScanLocation();
       
       /** \brief function to pick and place cube at particular centroid location
       *
@@ -424,8 +434,41 @@ class Cw3Solution
     /** \brief Current centroid found */
     geometry_msgs::PointStamped g_current_centroid;
 
+    /** \brief Max point of current cluster found */
+    geometry_msgs::Point g_current_centroid_max;
+
+    /** \brief Min point of current cluster found */
+    geometry_msgs::Point g_current_centroid_min;
+    
+    /** \brief Stores number of cubes found in stack */
+    int g_number_of_cubes_in_stack;
+
+    /** \brief Stores y coordinate corresponding to the max x bound of centroid */
+    double g_current_centroid_max_x_y;
+
+    /** \brief Stores x coordinate corresponding to the max y bound of centroid */
+    double g_current_centroid_max_y_x;
+
+    /** \brief Max depth of current centroid found */
+    double g_current_centroid_max_depth;
+
+    /** \brief Min depth of current centroid found */
+    double g_current_centroid_min_depth;
+
     /** \brief All centroids found */
     std::vector<geometry_msgs::PointStamped> g_centroids;
+
+    /** \brief All max points of centroids found */
+    std::vector<geometry_msgs::Point> g_centroids_max;
+
+    /** \brief All min points of centroids found */
+    std::vector<geometry_msgs::Point> g_centroids_min;
+
+    /** \brief Max depth of all centroids found */
+    std::vector<double> g_centroids_max_depth;
+
+    /** \brief Min depth of all centroids found */
+    std::vector<double> g_centroids_min_depth;
 
     /** \brief ROS pose publishers. */
     ros::Publisher g_pub_pose;
@@ -506,8 +549,21 @@ class Cw3Solution
     /** \brief Stores indices of point cloud for each cluster */
     std::vector<pcl::PointIndices> g_cluster_indices;
     
-    /** \brief Stores all centroids found for the requested cube */
+    /** \brief Stores all centroids found for the requested scan */
     std::vector<geometry_msgs::PointStamped> centroids;
+    
+    /** \brief Stores all max points of centroids found for the requested scan */
+    std::vector<geometry_msgs::Point> centroids_max;
+    
+    /** \brief Stores all min points of centroids found for the requested scan */
+    std::vector<geometry_msgs::Point> centroids_min;
+
+    /** \brief Stores the max depth of all centroids found for the requested scan */
+    std::vector<double> centroids_max_depth;
+
+    /** \brief Stores the min depth of all centroids found for the requested scan */
+    std::vector<double> centroids_min_depth;
+
 
 
   protected:
