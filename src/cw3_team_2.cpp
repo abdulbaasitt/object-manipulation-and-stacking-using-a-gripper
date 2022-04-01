@@ -261,6 +261,15 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   
   check_col.orientation = orientation;
 
+  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+  {
+    std_msgs::ColorRGBA Color;
+    Color.r = 0.0;
+    Color.g = 0.0;
+    Color.b = 0.0;
+    g_current_stack_colours.push_back(Color);
+  }
+
   //moveArm(check_col);
 
   // bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
@@ -273,14 +282,14 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   
   if (size > 0)
   {
-      for (int i = 0; i < size; i++)
-      {
-        std::cout << "This is the colour for cube: " + char(i)  << std::endl;
-        std::cout << "Red: " + char(g_current_stack_colours[i].r)  << std::endl;
-        std::cout << "Green: " + char(g_current_stack_colours[i].g)  << std::endl;
-        std::cout << "Blue: " + char(g_current_stack_colours[i].b)  << std::endl;
+    for (int i = 0; i < size; i++)
+    {
+      std::cout << "This is the colour for cube: " + char(i)  << std::endl;
+      std::cout << "Red: " + char(g_current_stack_colours[i].r)  << std::endl;
+      std::cout << "Green: " + char(g_current_stack_colours[i].g)  << std::endl;
+      std::cout << "Blue: " + char(g_current_stack_colours[i].b)  << std::endl;
 
-      }
+    }
   }
 
 
@@ -919,7 +928,7 @@ Cw3Solution::cloudCallBackOne
               Color.r = cloud_world[nIndex].r;
               Color.g = cloud_world[nIndex].g;
               Color.b = cloud_world[nIndex].b;
-              //g_current_stack_colours.emplace(g_current_stack_colours.begin()+i,Color);
+              g_current_stack_colours[i] = Color;
             }
           }
           else if((cloud_world[nIndex].z) < (0.03)+(i*0.04/2))
@@ -928,7 +937,7 @@ Cw3Solution::cloudCallBackOne
             Color.r = cloud_world[nIndex].r;
             Color.g = cloud_world[nIndex].g;
             Color.b = cloud_world[nIndex].b;
-            //g_current_stack_colours.emplace(g_current_stack_colours.begin()+i,Color);
+            g_current_stack_colours[i] = Color;
           }
         }
       }
