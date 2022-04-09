@@ -224,7 +224,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   // determine the placing orientation
   tf2::Quaternion q_object;
-  q_object.setRPY(0, -M_PI / 4, -M_PI / 2);
+  q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
   tf2::Quaternion q_result = q_x180deg * q_object;
   // geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
   
