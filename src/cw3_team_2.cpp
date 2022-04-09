@@ -98,7 +98,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   /* This service picks an object with a given pose and places it at a given pose */
 
 
-
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
   centroids_max.clear();
@@ -107,6 +106,9 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   centroids_min_depth.clear();
 
   int size = 0;
+  float yaw = 0.0;
+  std_msgs::ColorRGBA Color;
+  g_number_of_cubes_in_recorded_stack = 0;
 
 
   //initializing variable to scan an area of the robot arm environment
@@ -114,6 +116,15 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   float x_thrs_min = 0.20;
   float y_scan = 0.35;
   float y_thrs_min = 0.15;
+
+  // Initializing color array
+  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+  {
+    Color.r = 0.0;
+    Color.g = 0.0;
+    Color.b = 0.0;
+    g_current_stack_colours.push_back(Color);
+  }
 
 
   //initializing a variable to scan an area of the robot arm environment
@@ -141,43 +152,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
     y_scan -= 0.35;
     y_thrs_min -= 0.30;
   }
-  size = centroids.size();
-  g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
-  
-  if (size > 0)
-  {
-      for (int i = 0; i < size; i++)
-      {
-        std::cout << "This is centroid " + char(i)  << std::endl;
-        std::cout << centroids[i]  << std::endl;
-
-        std::cout << "The max x, y, z value of this cluster is: "  << std::endl;
-        std::cout << centroids_max[i]  << std::endl;
-        std::cout << "The min x, y, z value of this cluster is: "  << std::endl;
-        std::cout << centroids_min[i]  << std::endl;
-
-        std::cout << "The y value for the max x of this cluster is: "  << std::endl;
-        std::cout << g_current_centroid_max_x_y  << std::endl;
-        std::cout << "The x value for the max y of this cluster is: "  << std::endl;
-        std::cout << g_current_centroid_max_y_x  << std::endl;
-        
-
-        std::cout << "The max depth of this centroid is: "  << std::endl;
-        std::cout << centroids_max_depth[i]  << std::endl;
-        std::cout << "The min depth of this centroid is: "  << std::endl;
-        std::cout << centroids_min_depth[i]  << std::endl;
-
-        std::cout << "The number of cubes in this stack is: "  << std::endl;
-        std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
-      }
-  }
-
-  // FINDING ORIENTATION:
-  float yaw = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
-
-  // float yaw = atan2(((centroids_max[0].y)-g_current_centroid_max_x_y),((centroids_max[0].x)-g_current_centroid_max_y_x));
-  std::cout << "The angle is: "  << std::endl;
-  std::cout << yaw  << std::endl;
 
   //function call setting the scan area to coordinate where the stack was found
   scan1 = scan(scan1, centroids[0].point.x, centroids[0].point.y, 0.6);
@@ -239,16 +213,11 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   std::cout << yaw  << std::endl;
 
 
-  geometry_msgs::Point goal_loc;
-  goal_loc.x = 0.5;
-  goal_loc.y = 0.5;
-  goal_loc.z = 0;
 
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
   check_col.position.y = check_col.position.y + 0.1;
   check_col.position.z = 0.03 + ((0.04*g_number_of_cubes_in_recorded_stack)/2);
-
 
   // define grasping as from above
   tf2::Quaternion q_x180deg(-1, 0, 0, 0);
@@ -257,38 +226,35 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   tf2::Quaternion q_object;
   q_object.setRPY(0, -M_PI / 4, -M_PI / 2);
   tf2::Quaternion q_result = q_x180deg * q_object;
-  geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
+  // geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
   
-  check_col.orientation = orientation;
+  check_col.orientation = tf2::toMsg(q_result);;
 
-  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
-  {
-    std_msgs::ColorRGBA Color;
-    Color.r = 0.0;
-    Color.g = 0.0;
-    Color.b = 0.0;
-    g_current_stack_colours.push_back(Color);
-  }
+
+
 
   //moveArm(check_col);
 
+  // geometry_msgs::Point goal_loc;
+  // goal_loc.x = 0.5;
+  // goal_loc.y = 0.5;
+  // goal_loc.z = 0;
   // bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
 
 
   //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
   g_sub_cloud;
 
-  g_current_stack_colours.size();
+  //size = g_current_stack_colours.size();
   
-  if (size > 0)
+  if (g_number_of_cubes_in_recorded_stack > 0)
   {
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
     {
-      std::cout << "This is the colour for cube: " + char(i)  << std::endl;
-      std::cout << "Red: " + char(g_current_stack_colours[i].r)  << std::endl;
-      std::cout << "Green: " + char(g_current_stack_colours[i].g)  << std::endl;
-      std::cout << "Blue: " + char(g_current_stack_colours[i].b)  << std::endl;
-
+      std::cout << "This is the colour for cube: ";
+      std::cout << i  << std::endl;
+      std::cout << "Colour: "  << std::endl;
+      std::cout << g_current_stack_colours[i]  << std::endl;
     }
   }
 
@@ -849,6 +815,8 @@ Cw3Solution::cloudCallBackOne
   g_centroids_max_depth.clear();
   g_centroids_min_depth.clear();
 
+  std_msgs::ColorRGBA Color;
+
   for (std::vector<pcl::PointIndices>::const_iterator it = g_cluster_indices.begin (); it != g_cluster_indices.end (); ++it)
   {
     pcl::PointCloud<PointT>::Ptr cloud_cluster (new pcl::PointCloud<PointT>);
@@ -898,11 +866,12 @@ Cw3Solution::cloudCallBackOne
     g_current_centroid_min.y = minPt.y;
     g_current_centroid_min.z = minPt.z;
 
-    g_number_of_cubes_in_stack = round((g_current_centroid_max.z-0.03)/0.04);
+    g_number_of_cubes_in_stack = round(((g_current_centroid_max.z)-0.03)/0.04);
 
     g_current_centroid_max_x_y = 0.0;
     g_current_centroid_max_y_x = 0.0;
 
+    //g_current_stack_colours.clear();
 
     for(int nIndex = 0; nIndex < cloud_world.size (); nIndex++)
     {
@@ -915,30 +884,15 @@ Cw3Solution::cloudCallBackOne
       {
         g_current_centroid_max_y_x = cloud_world[nIndex].x;
       }
-      if (g_number_of_cubes_in_recorded_stack>0)
+
+      for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
       {
-        //g_current_stack_colours.clear();
-        for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+        if (((cloud_world[nIndex].z) < ((0.03)+(i*0.04/2)))&&((cloud_world[nIndex].z) > ((0.03)+((i-1)*0.04/2))))
         {
-          if(i>0)
-          {
-            if (((cloud_world[nIndex].z) < (0.03)+(i*0.04/2))&&((cloud_world[nIndex].z) > (0.03)+((i-1)*0.04/2)))
-            {
-              std_msgs::ColorRGBA Color;
-              Color.r = cloud_world[nIndex].r;
-              Color.g = cloud_world[nIndex].g;
-              Color.b = cloud_world[nIndex].b;
-              g_current_stack_colours[i] = Color;
-            }
-          }
-          else if((cloud_world[nIndex].z) < (0.03)+(i*0.04/2))
-          {
-            std_msgs::ColorRGBA Color;
-            Color.r = cloud_world[nIndex].r;
-            Color.g = cloud_world[nIndex].g;
-            Color.b = cloud_world[nIndex].b;
-            g_current_stack_colours[i] = Color;
-          }
+          Color.r = cloud_world[nIndex].r;
+          Color.g = cloud_world[nIndex].g;
+          Color.b = cloud_world[nIndex].b;
+          g_current_stack_colours[i] = Color;
         }
       }
 
@@ -946,8 +900,8 @@ Cw3Solution::cloudCallBackOne
 
     }
 
-    g_current_centroid_max_depth = maxPt.z;
-    g_current_centroid_min_depth = minPt.z;
+    // g_current_centroid_max_depth = maxPt.z;
+    // g_current_centroid_min_depth = minPt.z;
 
 
 
@@ -955,8 +909,8 @@ Cw3Solution::cloudCallBackOne
     g_centroids.push_back(g_current_centroid);
     g_centroids_max.push_back(g_current_centroid_max);
     g_centroids_min.push_back(g_current_centroid_min);
-    g_centroids_max_depth.push_back(g_current_centroid_max_depth);
-    g_centroids_min_depth.push_back(g_current_centroid_min_depth);
+    // g_centroids_max_depth.push_back(g_current_centroid_max_depth);
+    // g_centroids_min_depth.push_back(g_current_centroid_min_depth);
 
   }
   // Finding centroid pose of the entire filtered cloud to publish
