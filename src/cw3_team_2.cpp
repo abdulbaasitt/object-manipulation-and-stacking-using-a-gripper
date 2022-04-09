@@ -117,14 +117,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   float y_scan = 0.35;
   float y_thrs_min = 0.15;
 
-  // Initializing color array
-  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
-  {
-    Color.r = 0.0;
-    Color.g = 0.0;
-    Color.b = 0.0;
-    g_current_stack_colours.push_back(Color);
-  }
 
 
   //initializing a variable to scan an area of the robot arm environment
@@ -177,6 +169,15 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   size = centroids.size();
   g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
+
+  // Initializing color array
+  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+  {
+    Color.r = 0.0;
+    Color.g = 0.0;
+    Color.b = 0.0;
+    g_current_stack_colours.push_back(Color);
+  }
   
   if (size > 0)
   {
@@ -216,7 +217,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
-  check_col.position.y = check_col.position.y + 0.1;
+  check_col.position.y = check_col.position.y + 0.3;
   check_col.position.z = 0.03 + ((0.04*g_number_of_cubes_in_recorded_stack)/2);
 
   // define grasping as from above
@@ -226,14 +227,14 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   tf2::Quaternion q_object;
   q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
   tf2::Quaternion q_result = q_x180deg * q_object;
-  // geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
+  geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
   
-  check_col.orientation = tf2::toMsg(q_result);;
+  check_col.orientation = orientation;
 
 
 
 
-  //moveArm(check_col);
+  moveArm(check_col);
 
   // geometry_msgs::Point goal_loc;
   // goal_loc.x = 0.5;
@@ -251,8 +252,9 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   {
     for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
     {
-      std::cout << "This is the colour for cube: ";
-      std::cout << i  << std::endl;
+      //subscribing to the cloud to check for colour
+      g_sub_cloud;
+      std::cout << "This is the colour for cube: " << i << std::endl;
       std::cout << "Colour: "  << std::endl;
       std::cout << g_current_stack_colours[i]  << std::endl;
     }
@@ -322,8 +324,8 @@ Cw3Solution::findCentroidsAtScanLocation()
       centroid = g_centroids[i];
       centroid_max = g_centroids_max[i];
       centroid_min = g_centroids_min[i];
-      centroid_max_depth = g_centroids_max_depth[i];
-      centroid_min_depth = g_centroids_min_depth[i];
+      // centroid_max_depth = g_centroids_max_depth[i];
+      // centroid_min_depth = g_centroids_min_depth[i];
 
       double x = centroid.point.x;
       double y = centroid.point.y;
@@ -812,10 +814,10 @@ Cw3Solution::cloudCallBackOne
   g_centroids.clear();
   g_centroids_max.clear();
   g_centroids_min.clear();
-  g_centroids_max_depth.clear();
-  g_centroids_min_depth.clear();
+  // g_centroids_max_depth.clear();
+  // g_centroids_min_depth.clear();
 
-  std_msgs::ColorRGBA Color;
+
 
   for (std::vector<pcl::PointIndices>::const_iterator it = g_cluster_indices.begin (); it != g_cluster_indices.end (); ++it)
   {
@@ -843,7 +845,6 @@ Cw3Solution::cloudCallBackOne
       g_listener_.transformPointCloud ("panda_link0",
                                   cloud_cluster_camera,
                                   cloud_cluster_world);
-                                  
     }
     catch (tf::TransformException& ex)
     {
@@ -885,19 +886,68 @@ Cw3Solution::cloudCallBackOne
         g_current_centroid_max_y_x = cloud_world[nIndex].x;
       }
 
-      for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+      if (g_number_of_cubes_in_recorded_stack > 0)
       {
-        if (((cloud_world[nIndex].z) < ((0.03)+(i*0.04/2)))&&((cloud_world[nIndex].z) > ((0.03)+((i-1)*0.04/2))))
+        for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
         {
-          Color.r = cloud_world[nIndex].r;
-          Color.g = cloud_world[nIndex].g;
-          Color.b = cloud_world[nIndex].b;
-          g_current_stack_colours[i] = Color;
+
+          g_pt_world_lb.header.frame_id = "panda_link0";
+          g_pt_world_lb.header.stamp = ros::Time (0);
+          g_pt_world_lb.point.x = -20;
+          g_pt_world_lb.point.y = -20;
+          g_pt_world_lb.point.z = ((0.03)+((i-1)*0.04/2));
+          try
+          {
+            g_listener_.transformPoint (g_input_pc_frame_id_,
+                                        g_pt_world_lb,
+                                        g_pt_camera_lb);
+                                        
+          }
+          catch (tf::TransformException& ex)
+          {
+            ROS_ERROR ("Received a trasnformation exception: %s", ex.what());
+          }
+
+          g_pt_world_ub.header.frame_id = "panda_link0";
+          g_pt_world_ub.header.stamp = ros::Time (0);
+          g_pt_world_ub.point.x = 20;
+          g_pt_world_ub.point.y = 20;
+          g_pt_world_ub.point.z = ((0.03)+(i*0.04/2));
+          try
+          {
+            g_listener_.transformPoint (g_input_pc_frame_id_,
+                                        g_pt_world_ub,
+                                        g_pt_camera_ub);
+                                        
+          }
+          catch (tf::TransformException& ex)
+          {
+            ROS_ERROR ("Received a trasnformation exception: %s", ex.what());
+          }
+
+          
+          // if ((((cloud_cluster->points[nIndex].z) < g_pt_camera_ub.point.z) && ((cloud_cluster->points[nIndex].z) >  g_pt_camera_lb.point.z))
+          //     && (((cloud_cluster->points[nIndex].y) < g_pt_camera_ub.point.y) && ((cloud_cluster->points[nIndex].y) >  g_pt_camera_lb.point.y))
+          //     && (((cloud_cluster->points[nIndex].x) < g_pt_camera_ub.point.x) && ((cloud_cluster->points[nIndex].x) >  g_pt_camera_lb.point.x)))
+          // {
+          //   g_Color.r = cloud_cluster->points[nIndex].r;
+          //   g_Color.g = cloud_cluster->points[nIndex].g;
+          //   g_Color.b = cloud_cluster->points[nIndex].b;
+          //   g_current_stack_colours[i] = g_Color;
+          //   ROS_ERROR("IT COMES HERE! ...");
+          // }
+
+          if (((cloud_world[nIndex].z) < g_pt_world_ub.point.z)&&((cloud_world[nIndex].z) > g_pt_world_lb.point.z))
+          {
+            g_Color.r = cloud_cluster->points[nIndex].r;
+            g_Color.g = cloud_cluster->points[nIndex].g;
+            g_Color.b = cloud_cluster->points[nIndex].b;
+            g_current_stack_colours[i] = g_Color;
+            ROS_ERROR("IT COMES");
+          }
+
         }
       }
-
-
-
     }
 
     // g_current_centroid_max_depth = maxPt.z;
@@ -1069,7 +1119,7 @@ Cw3Solution::applyFF (PointCPtr &in_cloud_ptr,
   geometry_msgs::PointStamped pt_world;
   double lb_x = 0.0;
   double lb_y = 0.0;
-  double lb_z = 0.03;
+  double lb_z = 0.04;
   pt_world.header.frame_id = "panda_link0";
   pt_world.header.stamp = ros::Time (0);
   pt_world.point.x = lb_x;

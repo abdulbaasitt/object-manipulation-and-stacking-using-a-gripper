@@ -572,6 +572,15 @@ class Cw3Solution
     /** \brief Stores the min depth of all centroids found for the requested scan */
     std::vector<double> centroids_min_depth;
 
+    
+    // Comment these later ...
+    std_msgs::ColorRGBA g_Color;
+    geometry_msgs::PointStamped g_pt_world_lb;
+    geometry_msgs::PointStamped g_pt_camera_lb;
+    geometry_msgs::PointStamped g_pt_world_ub;
+    geometry_msgs::PointStamped g_pt_camera_ub;
+
+
 
 
   protected:
