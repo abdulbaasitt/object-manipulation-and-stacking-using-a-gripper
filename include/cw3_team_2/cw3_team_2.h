@@ -575,10 +575,13 @@ class Cw3Solution
     
     // Comment these later ...
     std_msgs::ColorRGBA g_Color;
+    std::vector<int> g_current_stack_cube_color_count;
+
     geometry_msgs::PointStamped g_pt_world_lb;
     geometry_msgs::PointStamped g_pt_camera_lb;
     geometry_msgs::PointStamped g_pt_world_ub;
     geometry_msgs::PointStamped g_pt_camera_ub;
+    bool g_check = false;
 
 
 

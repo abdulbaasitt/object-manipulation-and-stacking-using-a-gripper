@@ -98,6 +98,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   /* This service picks an object with a given pose and places it at a given pose */
 
 
+
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
   centroids_max.clear();
@@ -107,8 +108,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   int size = 0;
   float yaw = 0.0;
-  std_msgs::ColorRGBA Color;
   g_number_of_cubes_in_recorded_stack = 0;
+  g_check = true;
 
 
   //initializing variable to scan an area of the robot arm environment
@@ -116,7 +117,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   float x_thrs_min = 0.20;
   float y_scan = 0.35;
   float y_thrs_min = 0.15;
-
 
 
   //initializing a variable to scan an area of the robot arm environment
@@ -170,14 +170,17 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   size = centroids.size();
   g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
 
-  // Initializing color array
+
+  // Initializing color array and cube pixel counter, used to find an average rgb value for each cube
   for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
   {
-    Color.r = 0.0;
-    Color.g = 0.0;
-    Color.b = 0.0;
-    g_current_stack_colours.push_back(Color);
+    g_Color.r = 0.0;
+    g_Color.g = 0.0;
+    g_Color.b = 0.0;
+    g_current_stack_colours.push_back(g_Color);
+    g_current_stack_cube_color_count.push_back(0);
   }
+
   
   if (size > 0)
   {
@@ -214,18 +217,24 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   std::cout << yaw  << std::endl;
 
 
-
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
-  check_col.position.y = check_col.position.y + 0.3;
-  check_col.position.z = 0.03 + ((0.04*g_number_of_cubes_in_recorded_stack)/2);
+  check_col.position.y = check_col.position.y + 0.2;
+  check_col.position.z = 0.3;
+
+  //yaw_line_of_sight = atan2(,((centroids_max[0].y) - (check_col.position.y)));
+  // Line of sight to stack vector
+  float dx = (-(centroids_max[0].x) + (check_col.position.x));
+  float dy = (-(centroids_max[0].y) + (check_col.position.y));
+  float dz = (-(0.10) + (check_col.position.z));
 
   // define grasping as from above
   tf2::Quaternion q_x180deg(-1, 0, 0, 0);
 
   // determine the placing orientation
   tf2::Quaternion q_object;
-  q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
+  q_object.setRPY(-M_PI / 4, -M_PI/8 , 0);
+  //q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
   tf2::Quaternion q_result = q_x180deg * q_object;
   geometry_msgs::Quaternion orientation = tf2::toMsg(q_result);
   
@@ -252,13 +261,28 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   {
     for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
     {
-      //subscribing to the cloud to check for colour
-      g_sub_cloud;
-      std::cout << "This is the colour for cube: " << i << std::endl;
+      g_current_stack_colours[i].r = ((g_current_stack_colours[i].r)/(g_current_stack_cube_color_count[i]))/255;
+      g_current_stack_colours[i].g = ((g_current_stack_colours[i].g)/(g_current_stack_cube_color_count[i]))/255;
+      g_current_stack_colours[i].b = ((g_current_stack_colours[i].b)/(g_current_stack_cube_color_count[i]))/255;
+      std::cout << "This is the colour for cube: ";
+      std::cout << i  << std::endl;
       std::cout << "Colour: "  << std::endl;
       std::cout << g_current_stack_colours[i]  << std::endl;
     }
   }
+
+
+  geometry_msgs::Point stack_point;
+  stack_point.x = centroids[0].point.x;
+  stack_point.y = centroids[0].point.y;
+  response.stack_point = stack_point;
+
+  response.stack_rotation = yaw;
+
+  response.stack_colours = g_current_stack_colours;
+
+
+  return true;
 
 
 }
@@ -786,7 +810,6 @@ Cw3Solution::place(geometry_msgs::Point position)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
 void
 Cw3Solution::cloudCallBackOne
   (const sensor_msgs::PointCloud2ConstPtr &cloud_input_msg)
@@ -817,7 +840,7 @@ Cw3Solution::cloudCallBackOne
   // g_centroids_max_depth.clear();
   // g_centroids_min_depth.clear();
 
-
+  std_msgs::ColorRGBA Color;
 
   for (std::vector<pcl::PointIndices>::const_iterator it = g_cluster_indices.begin (); it != g_cluster_indices.end (); ++it)
   {
@@ -845,6 +868,7 @@ Cw3Solution::cloudCallBackOne
       g_listener_.transformPointCloud ("panda_link0",
                                   cloud_cluster_camera,
                                   cloud_cluster_world);
+                                  
     }
     catch (tf::TransformException& ex)
     {
@@ -867,12 +891,13 @@ Cw3Solution::cloudCallBackOne
     g_current_centroid_min.y = minPt.y;
     g_current_centroid_min.z = minPt.z;
 
-    g_number_of_cubes_in_stack = round(((g_current_centroid_max.z)-0.03)/0.04);
+    g_number_of_cubes_in_stack = round(((g_current_centroid_max.z)-0.017)/0.04);
 
     g_current_centroid_max_x_y = 0.0;
     g_current_centroid_max_y_x = 0.0;
 
-    //g_current_stack_colours.clear();
+    g_current_stack_colours.clear();
+    g_current_stack_cube_color_count.clear();
 
     for(int nIndex = 0; nIndex < cloud_world.size (); nIndex++)
     {
@@ -886,16 +911,16 @@ Cw3Solution::cloudCallBackOne
         g_current_centroid_max_y_x = cloud_world[nIndex].x;
       }
 
-      if (g_number_of_cubes_in_recorded_stack > 0)
+      if ((g_number_of_cubes_in_recorded_stack > 0)&&(g_check == true))
       {
         for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
         {
 
           g_pt_world_lb.header.frame_id = "panda_link0";
           g_pt_world_lb.header.stamp = ros::Time (0);
-          g_pt_world_lb.point.x = -20;
-          g_pt_world_lb.point.y = -20;
-          g_pt_world_lb.point.z = ((0.03)+((i-1)*0.04/2));
+          g_pt_world_lb.point.x = -2;
+          g_pt_world_lb.point.y = -2;
+          g_pt_world_lb.point.z = ((0.017)+((i)*0.04));
           try
           {
             g_listener_.transformPoint (g_input_pc_frame_id_,
@@ -910,9 +935,9 @@ Cw3Solution::cloudCallBackOne
 
           g_pt_world_ub.header.frame_id = "panda_link0";
           g_pt_world_ub.header.stamp = ros::Time (0);
-          g_pt_world_ub.point.x = 20;
-          g_pt_world_ub.point.y = 20;
-          g_pt_world_ub.point.z = ((0.03)+(i*0.04/2));
+          g_pt_world_ub.point.x = 2;
+          g_pt_world_ub.point.y = 2;
+          g_pt_world_ub.point.z = ((0.017)+((i+1)*0.04));
           try
           {
             g_listener_.transformPoint (g_input_pc_frame_id_,
@@ -934,18 +959,21 @@ Cw3Solution::cloudCallBackOne
           //   g_Color.g = cloud_cluster->points[nIndex].g;
           //   g_Color.b = cloud_cluster->points[nIndex].b;
           //   g_current_stack_colours[i] = g_Color;
-          //   ROS_ERROR("IT COMES HERE! ...");
           // }
 
           if (((cloud_world[nIndex].z) < g_pt_world_ub.point.z)&&((cloud_world[nIndex].z) > g_pt_world_lb.point.z))
           {
-            g_Color.r = cloud_cluster->points[nIndex].r;
-            g_Color.g = cloud_cluster->points[nIndex].g;
-            g_Color.b = cloud_cluster->points[nIndex].b;
-            g_current_stack_colours[i] = g_Color;
-            ROS_ERROR("IT COMES");
-          }
+            if (((cloud_world[nIndex].y) < 2) && ((cloud_world[nIndex].x) < 2) && ((cloud_world[nIndex].y) > -2) && ((cloud_world[nIndex].x) > -2))
+            {
+              g_current_stack_colours[i].r = g_current_stack_colours[i].r + cloud_cluster->points[nIndex].r;
+              g_current_stack_colours[i].g = g_current_stack_colours[i].g + cloud_cluster->points[nIndex].g;
+              g_current_stack_colours[i].b = g_current_stack_colours[i].b + cloud_cluster->points[nIndex].b;
+              //g_current_stack_colours[i] = g_Color;
 
+              g_current_stack_cube_color_count[i] = g_current_stack_cube_color_count[i] + 1;
+              //ROS_ERROR("Color");
+            }
+          }
         }
       }
     }
@@ -996,7 +1024,7 @@ Cw3Solution::applyPT (PointCPtr &in_cloud_ptr,
   /*this is used to ...*/
   g_pt.setInputCloud (in_cloud_ptr);
   g_pt.setFilterFieldName ("x");
-  g_pt.setFilterLimits (0.03, 1000); //put in config ...
+  g_pt.setFilterLimits (0.017, 1000); //put in config ...
   g_pt.filter (*out_cloud_ptr);
   
   return;
@@ -1119,7 +1147,7 @@ Cw3Solution::applyFF (PointCPtr &in_cloud_ptr,
   geometry_msgs::PointStamped pt_world;
   double lb_x = 0.0;
   double lb_y = 0.0;
-  double lb_z = 0.04;
+  double lb_z = 0.03;
   pt_world.header.frame_id = "panda_link0";
   pt_world.header.stamp = ros::Time (0);
   pt_world.point.x = lb_x;
