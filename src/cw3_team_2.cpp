@@ -217,6 +217,42 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   std::cout << yaw  << std::endl;
 
 
+
+
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // TESTING PICK ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // this is used in defining the origin of the floor collision object
+  geometry_msgs::Point cube_origin;
+  cube_origin = origin(cube_origin, centroids[0].point.x, centroids[0].point.y, 0.2);
+
+  // this is used in defining the dimension of the floor collision object
+  geometry_msgs::Vector3 cube_dimension;
+  cube_dimension = dimension(cube_dimension, 0.065, 0.065, 0.060);
+
+  // this is used in defining the orientation of the floor collision object
+  geometry_msgs::Quaternion cube_orientation;
+  cube_orientation = orientation(cube_orientation, 0.0, 0.0,0.0,yaw);
+
+
+  // function call to add a floor collision object with the arguments defined above/
+  addCollisionObject("cube_1",cube_origin,cube_dimension,cube_orientation);
+
+  centroids[0].point.z = 0.2;
+  geometry_msgs::Point goal_loc;
+  goal_loc.x = 0.5;
+  goal_loc.y = 0.5;
+  goal_loc.z = 0;
+  bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
   check_col.position.y = check_col.position.y + 0.2;
@@ -245,11 +281,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   moveArm(check_col);
 
-  // geometry_msgs::Point goal_loc;
-  // goal_loc.x = 0.5;
-  // goal_loc.y = 0.5;
-  // goal_loc.z = 0;
-  // bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
 
 
   //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
