@@ -229,7 +229,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   // this is used in defining the dimension of the floor collision object
   geometry_msgs::Vector3 cube_dimension;
-  cube_dimension = dimension(cube_dimension, 0.070, 0.070, 0.065);
+  cube_dimension = dimension(cube_dimension, 0.090, 0.090, 0.065);
 
   // this is used in defining the orientation of the floor collision object
   geometry_msgs::Quaternion cube_orientation;
@@ -327,14 +327,195 @@ bool
 Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   cw3_world_spawner::Task2Service::Response &response)
 {
+
   
-  /* This service .
+  /* This service scans the environment and stores the centroids of the cubes
+      to be picked within scan area. Then gets the stack colours, and pose 
+      from the request. Then goes to this  where the cube is to pick and deposit it
+      at the request location
   
   */
+
+  // clearing the list that store centroids of any previous centroid values
+  centroids.clear();
+  centroids_max.clear();
+  centroids_min.clear();
+  centroids_max_depth.clear();
+  centroids_min_depth.clear();
+  g_color_order.clear();
+  g_current_color_order_count.clear();
+
+  g_check_task_2 = false;
+
+  int size = 0;
+
+  g_place_angle_offset_ = request.stack_rotation;
+
+
+
+  //initializing variable to scan an area of the robot arm environment
+  float x_scan = 0.50;
+  float x_thrs_min = 0.20;
+  float y_scan = 0.35;
+  float y_thrs_min = 0.15;
+
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan1;
+
+  for (int i = 0; i < 3; i++)
+  {
+
+    g_check_task_2 = false;
+    //function call setting the scan area to specific coordinate
+    scan1 = scan(scan1, x_scan, y_scan, 0.6);
+
+    //setting a threshold to store a centroid within a particular scan area
+    g_x_thrs_min = x_thrs_min;
+    g_y_thrs_min = y_thrs_min;
+    g_x_thrs_max = g_x_thrs_min + 0.6;
+    g_y_thrs_max = g_y_thrs_min + 0.3;
+    
+    //function call to move arm towards scan coordinates
+    bool scan1_success = moveArm(scan1);
+    
+    //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
+    findCentroidsAtScanLocation();
+    g_check_task_2 = true;
+    
+    
+    //updating the scan area for the next iteration
+    y_scan -= 0.35;
+    y_thrs_min -= 0.30;
+  }
+
+  g_check_task_2 = false;
+
+  size = centroids.size();
+  g_size = size;
   
+  if (size > 0)
+  {
+      for (int i = 0; i < size; i++)
+      {
+        std::cout << "This is centroid " + char(i)  << std::endl;
+        std::cout << centroids[i];
+      }
+  }
+
+  std_msgs::ColorRGBA colour;
+
+  colour.r = request.stack_colours[0].r;
+  colour.g = request.stack_colours[0].g;
+  colour.b = request.stack_colours[0].b;
+  colour.a = request.stack_colours[0].a;
+
+  // std::cout << "RED: " << colour.r << std::endl;
+
+  ///////////////////
+   if (size > 0)
+  {
+    for (int i = 0; i < size; i++)
+    {
+      g_color_order[i].r = ((g_color_order[i].r)/(g_current_color_order_count[i]))/255;
+      g_color_order[i].g = ((g_color_order[i].g)/(g_current_color_order_count[i]))/255;
+      g_color_order[i].b = ((g_color_order[i].b)/(g_current_color_order_count[i]))/255;
+      std::cout << "This is the colour for cube: ";
+      std::cout << i  << std::endl;
+      std::cout << "Colour: "  << std::endl;
+      std::cout << g_color_order[i]  << std::endl;
+    }
+  }
+  ////////////////
 
 
-  return true;
+
+//   if (size > 0)
+//   {
+//       //looping through all the centroids
+
+
+//       geometry_msgs::Point target_point;
+//       target_point.x = request.stack_point.x;
+//       target_point.y = request.stack_point.y;
+//       target_point.z = 0.03;
+
+//       tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+
+//   // determine the placing orientation
+//       tf2::Quaternion q_object;
+//       q_object.setRPY(0, 0, g_place_angle_offset_);
+//       tf2::Quaternion q_result = q_x180deg * q_object;
+//       geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
+      
+      
+//       geometry_msgs::Point box_origin;
+//       box_origin = origin(box_origin, target_point.x , target_point.y, 0.0);
+
+//       // geometry_msgs::Point box_origin_2;
+//       // box_origin = origin(box_origin_2, target_point.x - 0.04 , target_point.y - 0.04, 0.0);
+
+
+//       // this is used in defining the dimension of the box collision object
+//       geometry_msgs::Vector3 box_dimension;
+//       box_dimension = dimension(box_dimension, 0.1, 0.1, 0.06);
+
+
+//       // this is used in defining the orientation of the box collision object
+//       geometry_msgs::Quaternion box_orientation;
+//       box_orientation = orientation(box_orientation, place_orientation.x, place_orientation.y, place_orientation.z, place_orientation.w);
+
+
+//       // function call to add a box collision object with the arguments defined above
+//       addCollisionObject("cube_2",box_origin,box_dimension,box_orientation);
+//       // addCollisionObject("cube_3",box_origin_2,box_dimension,box_orientation);
+
+//       for (int i = 0; i < size; i++)
+//       {
+//         // std::cout << "We are now trying to pick cube:  " + std::to_string(i)  << std::endl;;
+        
+//         //initializing a variable to store the coordinates of each centroid found
+//         geometry_msgs::Point position;
+//         position.x = (round(centroids[i].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+//         position.y = (round(centroids[i].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+//         position.z = 0.02; 
+
+//         // function call to pick an object at the desired coordinate
+//         bool pick_success = pick(position);
+
+//         removeCollisionObject("cube_2");
+
+//         if (not pick_success) 
+//         {
+//           ROS_ERROR("Object Pick up  failed");
+
+//           return false;
+//         }
+
+//         // function call to move arm towards scan coordinates
+
+//         // box_dimension.x = 0.1;
+//         // box_dimension.y = 0.1;
+//         box_dimension.z = box_dimension.z + 0.04;
+
+//         bool move_success = placeTask2(target_point);
+
+//         addCollisionObject("cube_2", box_origin, box_dimension, box_orientation);
+//         // addCollisionObject("cube_3",box_origin,box_dimension,box_orientation);
+
+//         target_point.z = target_point.z + 0.01;
+
+//         if (not move_success)
+//         {
+//           ROS_ERROR("Placing the object failed");
+          
+//           return false;
+//         }
+      
+//       }
+
+//   }
+
 }
 
 
@@ -697,6 +878,8 @@ Cw3Solution::addCollisionObject(std::string object_name,
   collision_object.object.id = object_name;
   collision_object.object.header.frame_id = base_frame_;
 
+  collision_object.link_name = base_frame_;
+
   // define the primitive and its dimensions
   collision_object.object.primitives.resize(1);
   collision_object.object.primitives[0].type = collision_object.object.primitives[0].BOX;
@@ -894,6 +1077,72 @@ Cw3Solution::place(geometry_msgs::Point position)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+bool
+Cw3Solution::placeTask2(geometry_msgs::Point position)
+{
+  /* This function places an object using a pose. The given point is where the
+  centre of the gripper fingers will converge */
+
+  // define placing as from above
+  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+
+  // determine the placing orientation
+  tf2::Quaternion q_object;
+  // float g_place_angle_offset_ = request.stack_rotation.data;
+  q_object.setRPY(0, 0, g_place_angle_offset_);
+  tf2::Quaternion q_result = q_x180deg * q_object;
+  geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
+     
+  // set the desired placing pose
+  geometry_msgs::Pose place_pose;
+  place_pose.position = position;
+  place_pose.orientation = place_orientation;
+  place_pose.position.z += z_offset_;
+  // place_pose.position.z += z_offset_task_2;
+
+  // set the desired pre-placing pose
+  geometry_msgs::Pose approach_pose;
+  approach_pose = place_pose;
+  // approach_pose.position.z += approach_distance_task_2;
+  approach_pose.position.z += approach_distance_;
+
+  /* Now perform the place */
+
+  bool success = true;
+
+  ROS_INFO("Begining place operation");
+
+  // move the arm above the place location
+  success *= moveArm(approach_pose);
+
+  if (not success) 
+  {
+    ROS_ERROR("Moving arm to place approach pose failed");
+    return false;
+  }
+
+  // approach to placing pose
+  success *= moveArm(place_pose);
+
+  if (not success) 
+  {
+    ROS_ERROR("Moving arm to placing pose failed");
+    return false;
+  }
+
+  // open the gripper
+  success *= moveGripper(gripper_open_);
+  if (not success) 
+  {
+    ROS_ERROR("Could not open Gripper");
+    return false;
+  }
+
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void
 Cw3Solution::cloudCallBackOne
   (const sensor_msgs::PointCloud2ConstPtr &cloud_input_msg)
@@ -923,6 +1172,9 @@ Cw3Solution::cloudCallBackOne
   g_centroids_min.clear();
   // g_centroids_max_depth.clear();
   // g_centroids_min_depth.clear();
+
+  g_color_order.clear();
+  g_current_color_order_count.clear();
 
   std_msgs::ColorRGBA Color;
 
@@ -982,6 +1234,7 @@ Cw3Solution::cloudCallBackOne
 
     g_current_stack_colours.clear();
     g_current_stack_cube_color_count.clear();
+
 
     for(int nIndex = 0; nIndex < cloud_world.size (); nIndex++)
     {
@@ -1059,6 +1312,30 @@ Cw3Solution::cloudCallBackOne
             }
           }
         }
+      }
+
+      if(g_check_task_2 == true)
+      {
+        
+        for(int i = 0; i < g_size ; i++)
+        {
+
+          if (((cloud_world[nIndex].z) < 0.07)&&((cloud_world[nIndex].z) > 0.05))
+          {
+            if (((cloud_world[nIndex].y) < 2) && ((cloud_world[nIndex].x) < 2) && ((cloud_world[nIndex].y) > -2) && ((cloud_world[nIndex].x) > -2))
+            {
+              g_color_order[i].r = g_color_order[i].r + cloud_cluster->points[nIndex].r;
+              g_color_order[i].g = g_color_order[i].g + cloud_cluster->points[nIndex].g;
+              g_color_order[i].b = g_color_order[i].b + cloud_cluster->points[nIndex].b;
+              //g_current_stack_colours[i] = g_Color;
+
+              g_current_color_order_count[i] = g_current_color_order_count[i] + 1;
+              //ROS_ERROR("Color");
+            }
+          } 
+
+        }
+        
       }
     }
 

@@ -575,15 +575,30 @@ class Cw3Solution
     
     // Comment these later ...
     std_msgs::ColorRGBA g_Color;
+    std_msgs::ColorRGBA g_current_centroid_colour;
     std::vector<int> g_current_stack_cube_color_count;
+    std::vector<int> g_current_color_order_count;
 
     geometry_msgs::PointStamped g_pt_world_lb;
     geometry_msgs::PointStamped g_pt_camera_lb;
     geometry_msgs::PointStamped g_pt_world_ub;
     geometry_msgs::PointStamped g_pt_camera_ub;
     bool g_check = false;
+    bool g_check_task_2 = false;
     
     std::string g_pick_object = "";
+
+    float g_place_angle_offset_;
+
+
+    /** \brief Stores number of cubes found in Task 2 */
+    int g_size;
+
+    /** \brief Colours of all cubes in the stack */
+    std::vector<std_msgs::ColorRGBA> g_color_order;
+
+    bool
+    placeTask2(geometry_msgs::Point position);
 
 
 
