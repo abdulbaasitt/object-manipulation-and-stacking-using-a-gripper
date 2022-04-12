@@ -582,6 +582,8 @@ class Cw3Solution
     geometry_msgs::PointStamped g_pt_world_ub;
     geometry_msgs::PointStamped g_pt_camera_ub;
     bool g_check = false;
+    
+    std::string g_pick_object = "";
 
 
 

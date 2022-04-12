@@ -146,7 +146,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   }
 
   //function call setting the scan area to coordinate where the stack was found
-  scan1 = scan(scan1, centroids[0].point.x, centroids[0].point.y, 0.6);
+  scan1 = scan(scan1, centroids[0].point.x, centroids[0].point.y, 0.45);
   
   //function call to move arm towards scan coordinates
   bool scan1_success = moveArm(scan1);
@@ -229,15 +229,17 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
 
   // this is used in defining the dimension of the floor collision object
   geometry_msgs::Vector3 cube_dimension;
-  cube_dimension = dimension(cube_dimension, 0.065, 0.065, 0.060);
+  cube_dimension = dimension(cube_dimension, 0.070, 0.070, 0.065);
 
   // this is used in defining the orientation of the floor collision object
   geometry_msgs::Quaternion cube_orientation;
-  cube_orientation = orientation(cube_orientation, 0.0, 0.0,0.0,yaw);
+  cube_orientation = orientation(cube_orientation, 0.0, 0.0,yaw,1.0);
 
 
   // function call to add a floor collision object with the arguments defined above/
   addCollisionObject("cube_1",cube_origin,cube_dimension,cube_orientation);
+
+  g_pick_object = "cube_1";
 
   centroids[0].point.z = 0.2;
   geometry_msgs::Point goal_loc;
@@ -617,6 +619,7 @@ Cw3Solution::moveGripper(float width)
 
   // apply the joint target
   hand_group_.setJointValueTarget(gripperJointTargets);
+  hand_group_.planGraspsAndPick(g_pick_object);
 
   // move the robot hand
   ROS_INFO("Attempting to plan the path");
@@ -626,12 +629,58 @@ Cw3Solution::moveGripper(float width)
 
   ROS_INFO("Visualising plan %s", success ? "" : "FAILED");
 
+  
   hand_group_.move();
 
   return success;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+// void
+// Cw3Solution::addCollisionObject(std::string object_name,
+//   geometry_msgs::Point centre, geometry_msgs::Vector3 dimensions,
+//   geometry_msgs::Quaternion orientation)
+// {
+//   /* add a collision object in RViz and the MoveIt planning scene */
+
+//   // create a collision object message, and a vector of these messages
+//   moveit_msgs::CollisionObject collision_object;
+//   std::vector<moveit_msgs::CollisionObject> object_vector;
+  
+//   // input header information
+//   collision_object.id = object_name;
+//   collision_object.header.frame_id = base_frame_;
+
+//   // define the primitive and its dimensions
+//   collision_object.primitives.resize(1);
+//   collision_object.primitives[0].type = collision_object.primitives[0].BOX;
+//   collision_object.primitives[0].dimensions.resize(3);
+//   collision_object.primitives[0].dimensions[0] = dimensions.x;
+//   collision_object.primitives[0].dimensions[1] = dimensions.y;
+//   collision_object.primitives[0].dimensions[2] = dimensions.z;
+
+//   // define the pose of the collision object
+//   collision_object.primitive_poses.resize(1);
+//   collision_object.primitive_poses[0].position.x = centre.x;
+//   collision_object.primitive_poses[0].position.y = centre.y;
+//   collision_object.primitive_poses[0].position.z = centre.z;
+//   collision_object.primitive_poses[0].orientation = orientation;
+  
+
+//   // define that we will be adding this collision object 
+//   // hint: what about collision_object.REMOVE?
+//   collision_object.operation = collision_object.ADD;
+
+//   // make the collision object graspable
+//   collision_object.touch_links = std::vector<std::string>{"panda_hand","panda_leftfinger","panda_rightfinger"};
+
+//   // add the collision object to the vector, then apply to planning scene
+//   object_vector.push_back(collision_object);
+//   planning_scene_interface_.applyCollisionObjects(object_vector);
+
+//   return;
+// }
 
 void
 Cw3Solution::addCollisionObject(std::string object_name,
@@ -641,35 +690,39 @@ Cw3Solution::addCollisionObject(std::string object_name,
   /* add a collision object in RViz and the MoveIt planning scene */
 
   // create a collision object message, and a vector of these messages
-  moveit_msgs::CollisionObject collision_object;
-  std::vector<moveit_msgs::CollisionObject> object_vector;
+  moveit_msgs::AttachedCollisionObject collision_object;
+  std::vector<moveit_msgs::AttachedCollisionObject> object_vector;
   
   // input header information
-  collision_object.id = object_name;
-  collision_object.header.frame_id = base_frame_;
+  collision_object.object.id = object_name;
+  collision_object.object.header.frame_id = base_frame_;
 
   // define the primitive and its dimensions
-  collision_object.primitives.resize(1);
-  collision_object.primitives[0].type = collision_object.primitives[0].BOX;
-  collision_object.primitives[0].dimensions.resize(3);
-  collision_object.primitives[0].dimensions[0] = dimensions.x;
-  collision_object.primitives[0].dimensions[1] = dimensions.y;
-  collision_object.primitives[0].dimensions[2] = dimensions.z;
+  collision_object.object.primitives.resize(1);
+  collision_object.object.primitives[0].type = collision_object.object.primitives[0].BOX;
+  collision_object.object.primitives[0].dimensions.resize(3);
+  collision_object.object.primitives[0].dimensions[0] = dimensions.x;
+  collision_object.object.primitives[0].dimensions[1] = dimensions.y;
+  collision_object.object.primitives[0].dimensions[2] = dimensions.z;
 
   // define the pose of the collision object
-  collision_object.primitive_poses.resize(1);
-  collision_object.primitive_poses[0].position.x = centre.x;
-  collision_object.primitive_poses[0].position.y = centre.y;
-  collision_object.primitive_poses[0].position.z = centre.z;
-  collision_object.primitive_poses[0].orientation = orientation;
+  collision_object.object.primitive_poses.resize(1);
+  collision_object.object.primitive_poses[0].position.x = centre.x;
+  collision_object.object.primitive_poses[0].position.y = centre.y;
+  collision_object.object.primitive_poses[0].position.z = centre.z;
+  collision_object.object.primitive_poses[0].orientation = orientation;
 
   // define that we will be adding this collision object 
   // hint: what about collision_object.REMOVE?
-  collision_object.operation = collision_object.ADD;
+  collision_object.object.operation = collision_object.object.ADD;
+
+  // make the collision object graspable
+  collision_object.touch_links = std::vector<std::string>{ "panda_hand", "panda_leftfinger", "panda_rightfinger" };
 
   // add the collision object to the vector, then apply to planning scene
+  ROS_INFO("Adding the object into the world at the location of the hand.");
   object_vector.push_back(collision_object);
-  planning_scene_interface_.applyCollisionObjects(object_vector);
+  planning_scene_interface_.applyAttachedCollisionObjects(object_vector);
 
   return;
 }
