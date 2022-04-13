@@ -561,7 +561,7 @@ class Cw3Solution
     /** \brief Stores all centroids found for the requested scan */
     std::vector<geometry_msgs::PointStamped> centroids;
 
-    std::vector<geometry_msgs::PointStamped> oldcentroids;
+    std::vector<geometry_msgs::PointStamped> g_oldcentroids;
 
     
     /** \brief Stores all max points of centroids found for the requested scan */
@@ -597,13 +597,19 @@ class Cw3Solution
 
 
     /** \brief Stores number of cubes found in Task 2 */
-    int g_size;
+    int g_size = 0;
 
     /** \brief Colours of all cubes in the stack */
     std::vector<std_msgs::ColorRGBA> g_color_order;
 
     bool
     placeTask2(geometry_msgs::Point position);
+
+    geometry_msgs::Point g_cube_pick_origin;
+    geometry_msgs::Vector3 g_cube_pick_dimension;
+    geometry_msgs::Quaternion g_cube_pick_orientation;
+
+    double eu_distance;
 
 
 
