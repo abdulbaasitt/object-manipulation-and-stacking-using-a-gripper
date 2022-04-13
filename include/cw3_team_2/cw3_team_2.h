@@ -38,6 +38,7 @@
 #define _USE_MATH_DEFINES
 
 #include <ros/ros.h>
+#include <ros/time.h>
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
@@ -559,6 +560,9 @@ class Cw3Solution
     
     /** \brief Stores all centroids found for the requested scan */
     std::vector<geometry_msgs::PointStamped> centroids;
+
+    std::vector<geometry_msgs::PointStamped> oldcentroids;
+
     
     /** \brief Stores all max points of centroids found for the requested scan */
     std::vector<geometry_msgs::Point> centroids_max;
@@ -575,6 +579,7 @@ class Cw3Solution
     
     // Comment these later ...
     std_msgs::ColorRGBA g_Color;
+    std_msgs::ColorRGBA g_Color_2;
     std_msgs::ColorRGBA g_current_centroid_colour;
     std::vector<int> g_current_stack_cube_color_count;
     std::vector<int> g_current_color_order_count;
