@@ -426,7 +426,19 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   {
     //g_check_task_2 = false;
     std::cout << "Trying to check again ";
-    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.40);
+    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.35);
+
+    // define placing as from above
+    tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+
+    // determine the placing orientation
+    tf2::Quaternion q_object;
+    angle_offset_ = 3.14159 / 4.0;
+    q_object.setRPY(0, 0, angle_offset_);
+    tf2::Quaternion q_result = q_x180deg * q_object;
+    geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
+    checkwell.orientation = place_orientation;
+
     bool checkwell_success = moveArm(checkwell);
     
     //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
@@ -1396,7 +1408,7 @@ Cw3Solution::cloudCallBackOne
         {
           eu_distance = sqrt(pow((g_current_centroid.point.x - g_oldcentroids[i].point.x), 2) + pow((g_current_centroid.point.y - g_oldcentroids[i].point.y), 2) * 1.0);
           
-          if (eu_distance < 0.08)
+          if (eu_distance < 0.03)
           {
             
             g_color_order[i].r = g_color_order[i].r + cloud_cluster->points[nIndex].r;
