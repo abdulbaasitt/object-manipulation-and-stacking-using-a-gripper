@@ -464,9 +464,9 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
 
   for (int i = 0; i < g_size; i++)
   {
-    g_color_order[i].r = ((g_color_order[i].r)/(g_current_color_order_count[i]))/255;
-    g_color_order[i].g = ((g_color_order[i].g)/(g_current_color_order_count[i]))/255;
-    g_color_order[i].b = ((g_color_order[i].b)/(g_current_color_order_count[i]))/255;
+    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
+    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10; 
+    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
 
     std::cout << "This is the colour for cube: " << i  << std::endl;
     std::cout << g_color_order[i]  << std::endl;
@@ -490,6 +490,11 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   list_of_colours = request.stack_colours;
   
   int num_of_colours = list_of_colours.size();
+
+  for (int i = 0; i < 3; i++)
+  {
+    index_of_cubes_to_stack.push_back(0);
+  }
   
   std::cout << "there are this many number of cubes to stack : " << num_of_colours << std::endl;
   
@@ -499,149 +504,132 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
     std::cout << list_of_colours[i];
   }
   
+  
+  // std::vector<geometry_msgs::PointStamped> final_centroids;
+
+  // final_centroids.clear();
+
   for(int i = 0; i < num_of_colours; i++)
   {
     for(int j = 0; j < size; j++)
-    {
-      if(abs(list_of_colours[i].r - g_color_order[j].r) <= 0.1 && abs(list_of_colours[i].g - g_color_order[j].g) <= 0.1 && abs(list_of_colours[i].b - g_color_order[j].b) <= 0.1)
       {
-        std::cout << "The Cubes matching the first request is : " << i << std::endl;
-        std::cout << g_color_order[j];
+        if(abs(list_of_colours[i].r - g_color_order[j].r) <= 0.15 && abs(list_of_colours[i].g - g_color_order[j].g) <= 0.3 && abs(list_of_colours[i].b - g_color_order[j].b) <= 0.3)
+        {
+          std::cout << "The Cubes matching the first request is cube : " << i << std::endl;
+
+          if (std::find(index_of_cubes_to_stack.begin(), index_of_cubes_to_stack.end(), j) != index_of_cubes_to_stack.end() && index_of_cubes_to_stack.size() > 0 ) 
+          {
+              std::cout << "Element found"<< std::endl;
+          }
+          else
+          {
+            index_of_cubes_to_stack[i] = j;
+          // final_centroids[i] = centroids[j];
+            std::cout << g_color_order[j]  << std::endl;
+          // std::cout << "centroid location " << centroids[j]  << std::endl;
+            std::cout <<"index of cube again: " << index_of_cubes_to_stack[i]  << std::endl;
+          // std::cout << "final centroids _j " << final_centroids[j]  << std::endl;
+            break;
+          }
+          
+        }
       }
-      // index_of_cubes_to_stack[i]
-    }
   }
 
-  ////////////////My changes///////////////////////////////////
-  // if (size > 0)
-  // {
-  //     for (int i = 0; i < size; i++)
-  //     {
-  //       std::cout << "This is centroid " + char(i)  << std::endl;
-  //       std::cout << centroids[i];
-  //     }
-  // }
-
- 
-
-  // std_msgs::ColorRGBA colour;
-
-  // colour.r = request.stack_colours[0].r;
-  // colour.g = request.stack_colours[0].g;
-  // colour.b = request.stack_colours[0].b;
-  // colour.a = request.stack_colours[0].a;
-
-  // std::cout << "RED: " << colour.r << std::endl;
-
-   ////////////////My changes///////////////////////////////////
-
-  ///////////////////
+  for  (int i = 0; i < index_of_cubes_to_stack.size(); i++)
+  {
+    std::cout <<"AFTER LOOP_INDEX_OF_CUBE_IN_STACK: " << index_of_cubes_to_stack[i]  << std::endl;
+  }
 
 
-  
-
-  //  if (size > 0)
-  // {
-  //   for (int i = 0; i < size; i++)
-  //   {
-  //     g_color_order[i].r = ((g_color_order[i].r)/(g_current_color_order_count[i]))/255;
-  //     g_color_order[i].g = ((g_color_order[i].g)/(g_current_color_order_count[i]))/255;
-  //     g_color_order[i].b = ((g_color_order[i].b)/(g_current_color_order_count[i]))/255;
-  //     std::cout << "This is the colour for cube: ";
-  //     std::cout << i  << std::endl;
-  //     std::cout << "Colour: "  << std::endl;
-  //     std::cout << g_color_order[i]  << std::endl;
-  //   }
-  // }
-  //////////////
+    if (num_of_colours > 0)
+    {
+        //looping through all the centroids
 
 
+        geometry_msgs::Point target_point;
+        target_point.x = request.stack_point.x;
+        target_point.y = request.stack_point.y;
+        target_point.z = 0.03;
 
-    // if (size > 0)
-    // {
-    //     //looping through all the centroids
+        tf2::Quaternion q_x180deg(-1, 0, 0, 0);
 
-
-    //     geometry_msgs::Point target_point;
-    //     target_point.x = request.stack_point.x;
-    //     target_point.y = request.stack_point.y;
-    //     target_point.z = 0.03;
-
-    //     tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-
-    // // determine the placing orientation
-    //     tf2::Quaternion q_object;
-    //     q_object.setRPY(0, 0, g_place_angle_offset_);
-    //     tf2::Quaternion q_result = q_x180deg * q_object;
-    //     geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
+    // determine the placing orientation
+        tf2::Quaternion q_object;
+        q_object.setRPY(0, 0, g_place_angle_offset_);
+        tf2::Quaternion q_result = q_x180deg * q_object;
+        geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
         
         
-    //     geometry_msgs::Point box_origin;
-    //     box_origin = origin(box_origin, target_point.x , target_point.y, 0.0);
+        geometry_msgs::Point box_origin;
+        box_origin = origin(box_origin, target_point.x , target_point.y, 0.0);
 
-    //     // geometry_msgs::Point box_origin_2;
-    //     // box_origin = origin(box_origin_2, target_point.x - 0.04 , target_point.y - 0.04, 0.0);
-
-
-    //     // this is used in defining the dimension of the box collision object
-    //     geometry_msgs::Vector3 box_dimension;
-    //     box_dimension = dimension(box_dimension, 0.15, 0.15, 0.06);
+        // geometry_msgs::Point box_origin_2;
+        // box_origin = origin(box_origin_2, target_point.x - 0.04 , target_point.y - 0.04, 0.0);
 
 
-    //     // this is used in defining the orientation of the box collision object
-    //     geometry_msgs::Quaternion box_orientation;
-    //     box_orientation = orientation(box_orientation, place_orientation.x, place_orientation.y, place_orientation.z, place_orientation.w);
+        // this is used in defining the dimension of the box collision object
+        geometry_msgs::Vector3 box_dimension;
+        box_dimension = dimension(box_dimension, 0.15, 0.15, 0.06);
 
 
-    //     // function call to add a box collision object with the arguments defined above
-    //     addCollisionObject("cube_2",box_origin,box_dimension,box_orientation);
-    //     // addCollisionObject("cube_3",box_origin_2,box_dimension,box_orientation);
+        // this is used in defining the orientation of the box collision object
+        geometry_msgs::Quaternion box_orientation;
+        box_orientation = orientation(box_orientation, place_orientation.x, place_orientation.y, place_orientation.z, place_orientation.w);
 
-    //     for (int i = 0; i < size; i++)
-    //     {
-    //       // std::cout << "We are now trying to pick cube:  " + std::to_string(i)  << std::endl;;
-          
-    //       //initializing a variable to store the coordinates of each centroid found
-    //       geometry_msgs::Point position;
-    //       position.x = (round(centroids[i].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-    //       position.y = (round(centroids[i].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-    //       position.z = 0.02; 
 
-    //       // function call to pick an object at the desired coordinate
-    //       bool pick_success = pick(position);
+        // function call to add a box collision object with the arguments defined above
+        addCollisionObject("cube_2",box_origin,box_dimension,box_orientation);
+        // addCollisionObject("cube_3",box_origin_2,box_dimension,box_orientation);
 
-    //       removeCollisionObject("cube_2");
+        for (int i = 0; i < num_of_colours; i++)
+        {
+          std::cout << "We are now trying to pick cube:  " + std::to_string(i)  << std::endl;;
+          std::cout <<"index of cube to pick: " << index_of_cubes_to_stack[i]  << std::endl;
+          std::cout <<"point x of index: " << centroids[index_of_cubes_to_stack[i]].point.x << std::endl;
+          std::cout <<"point y of index: " << centroids[index_of_cubes_to_stack[i]].point.y  << std::endl;
+          std::cout <<"point z of index: " << centroids[index_of_cubes_to_stack[i]].point.z  << std::endl;
+          //initializing a variable to store the coordinates of each centroid found
+          geometry_msgs::Point position;
+          position.x = (round(centroids[index_of_cubes_to_stack[i]].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+          position.y = (round(centroids[index_of_cubes_to_stack[i]].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+          position.z = 0.02; 
 
-    //       if (not pick_success) 
-    //       {
-    //         ROS_ERROR("Object Pick up  failed");
+          // function call to pick an object at the desired coordinate
+          bool pick_success = pick(position);
 
-    //         return false;
-    //       }
+          removeCollisionObject("cube_2");
 
-    //       // function call to move arm towards scan coordinates
+          if (not pick_success) 
+          {
+            ROS_ERROR("Object Pick up  failed");
 
-    //       // box_dimension.x = 0.1;
-    //       // box_dimension.y = 0.1;
-    //       box_dimension.z = box_dimension.z + 0.04;
+            return false;
+          }
 
-    //       bool move_success = placeTask2(target_point);
+          // function call to move arm towards scan coordinates
 
-    //       addCollisionObject("cube_2", box_origin, box_dimension, box_orientation);
-    //       // addCollisionObject("cube_3",box_origin,box_dimension,box_orientation);
+          // box_dimension.x = 0.1;
+          // box_dimension.y = 0.1;
+          box_dimension.z = box_dimension.z + 0.04;
 
-    //       target_point.z = target_point.z + 0.01;
+          bool move_success = placeTask2(target_point);
 
-    //       if (not move_success)
-    //       {
-    //         ROS_ERROR("Placing the object failed");
+          addCollisionObject("cube_2", box_origin, box_dimension, box_orientation);
+          // addCollisionObject("cube_3",box_origin,box_dimension,box_orientation);
+
+          target_point.z = target_point.z + 0.01;
+
+          if (not move_success)
+          {
+            ROS_ERROR("Placing the object failed");
             
-    //         return false;
-    //       }
+            return false;
+          }
         
-    //     }
+        }
 
-    // }
+    }
 
 }
 
