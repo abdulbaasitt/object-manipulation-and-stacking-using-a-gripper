@@ -225,7 +225,7 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   geometry_msgs::Pose check_col;
   check_col.position = centroids[0].point;
   check_col.position.y = check_col.position.y + 0.15;
-  check_col.position.z = 0.25;
+  check_col.position.z = 0.35;
 
   //yaw_line_of_sight = atan2(,((centroids_max[0].y) - (check_col.position.y)));
   // Line of sight to stack vector
@@ -277,11 +277,13 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   //angle_offset_ = double(yaw + (3.14159 / 4.0));
   angle_offset_ = yaw;
 
+  centroids[0].point.z = 0.2;
+
   // this is used in defining the origin of the floor collision object
-  g_cube_pick_origin = origin(g_cube_pick_origin, centroids[0].point.x, centroids[0].point.y, 0.2);
+  g_cube_pick_origin = origin(g_cube_pick_origin, centroids[0].point.x, centroids[0].point.y, centroids[0].point.z);
 
   // this is used in defining the dimension of the floor collision object
-  g_cube_pick_dimension = dimension(g_cube_pick_dimension, 0.1, 0.1, 0.065);
+  g_cube_pick_dimension = dimension(g_cube_pick_dimension, 0.075, 0.075, 0.065);
 
   // this is used in defining the orientation of the floor collision object
   g_cube_pick_orientation = orientation(g_cube_pick_orientation, 0.0, 0.0, angle_offset_, 1.0);
@@ -292,13 +294,15 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   addCollisionObject(g_pick_object,g_cube_pick_origin,g_cube_pick_dimension,g_cube_pick_orientation);
 
 
-  centroids[0].point.z = 0.2;
   geometry_msgs::Point goal_loc;
   goal_loc.x = 0.5;
   goal_loc.y = 0.5;
   goal_loc.z = 0;
-  bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
+
   removeCollisionObject(g_pick_object);
+
+
+  bool pickCubes = pickaAndPlaceCube(centroids, goal_loc);
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -365,7 +369,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   for (int i = 0; i < 3; i++)
   {
     //function call setting the scan area to specific coordinate
-    scan1 = scan(scan1, x_scan, y_scan, 0.6);
+    scan1 = scan(scan1, x_scan, y_scan, 0.7);
 
     //setting a threshold to store a centroid within a particular scan area
     g_x_thrs_min = x_thrs_min;
@@ -427,7 +431,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   {
     //g_check_task_2 = false;
     std::cout << "Trying to check again ";
-    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.35);
+    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.40);
 
     // define placing as from above
     tf2::Quaternion q_x180deg(-1, 0, 0, 0);
@@ -473,6 +477,39 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
 
 
     
+  }
+
+  std::vector<std_msgs::ColorRGBA> list_of_colours;
+ 
+  list_of_colours.clear();
+  
+  std::vector<int> index_of_cubes_to_stack;
+  
+  index_of_cubes_to_stack.clear();
+  
+  list_of_colours = request.stack_colours;
+  
+  int num_of_colours = list_of_colours.size();
+  
+  std::cout << "there are this many number of cubes to stack : " << num_of_colours << std::endl;
+  
+  for(int i = 0; i < num_of_colours; i++)
+  {
+    std::cout << "Cube : " << i << std::endl;
+    std::cout << list_of_colours[i];
+  }
+  
+  for(int i = 0; i < num_of_colours; i++)
+  {
+    for(int j = 0; j < size; j++)
+    {
+      if(abs(list_of_colours[i].r - g_color_order[j].r) <= 0.1 && abs(list_of_colours[i].g - g_color_order[j].g) <= 0.1 && abs(list_of_colours[i].b - g_color_order[j].b) <= 0.1)
+      {
+        std::cout << "The Cubes matching the first request is : " << i << std::endl;
+        std::cout << g_color_order[j];
+      }
+      // index_of_cubes_to_stack[i]
+    }
   }
 
   ////////////////My changes///////////////////////////////////
@@ -960,6 +997,13 @@ Cw3Solution::addCollisionObject(std::string object_name,
 {
   /* add a collision object in RViz and the MoveIt planning scene */
 
+  // https://github.com/ros-planning/moveit_tutorials/blob/master/doc/planning_scene_ros_api/src/planning_scene_ros_api_tutorial.cpp
+  ros::WallDuration sleep_t(0.5);
+  while (planning_scene_diff_publisher.getNumSubscribers() < 1)
+  {
+    sleep_t.sleep();
+  }
+
   // create a collision object message, and a vector of these messages
   moveit_msgs::AttachedCollisionObject collision_object;
   std::vector<moveit_msgs::AttachedCollisionObject> object_vector;
@@ -996,6 +1040,30 @@ Cw3Solution::addCollisionObject(std::string object_name,
   ROS_INFO("Adding the object into the world at the location of the hand.");
   object_vector.push_back(collision_object);
   planning_scene_interface_.applyAttachedCollisionObjects(object_vector);
+  
+  // https://github.com/ros-planning/moveit_tutorials/blob/master/doc/planning_scene_ros_api/src/planning_scene_ros_api_tutorial.cpp
+  ROS_INFO("Adding the object into the world at the location of the hand.");
+  moveit_msgs::PlanningScene planning_scene;
+  planning_scene.world.collision_objects.push_back(collision_object.object);
+  planning_scene.is_diff = true;
+  // put in header ...
+  planning_scene_diff_publisher.publish(planning_scene);
+
+  moveit_msgs::CollisionObject remove_object;
+  remove_object.id = object_name;
+  remove_object.header.frame_id = base_frame_;
+  remove_object.operation = remove_object.REMOVE;
+
+  // Note how we make sure that the diff message contains no other
+  // attached objects or collisions objects by clearing those fields
+  // first.
+  /* Carry out the REMOVE + ATTACH operation */
+  ROS_INFO("Attaching the object to the hand and removing it from the world.");
+  planning_scene.world.collision_objects.clear();
+  planning_scene.world.collision_objects.push_back(remove_object);
+  planning_scene.robot_state.attached_collision_objects.push_back(collision_object);
+  planning_scene.robot_state.is_diff = true;
+  planning_scene_diff_publisher.publish(planning_scene);
 
   return;
 }

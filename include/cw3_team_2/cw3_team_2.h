@@ -613,6 +613,11 @@ class Cw3Solution
 
 
     std::vector<double> g_yaw_list;
+    
+    
+    
+    ros::NodeHandle node_handle;
+    ros::Publisher planning_scene_diff_publisher = node_handle.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
 
 
