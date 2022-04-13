@@ -399,6 +399,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
     g_Color_2.b = 0.0;
     g_color_order.push_back(g_Color_2);
     g_current_color_order_count.push_back(0);
+    g_yaw_list.push_back(0);
   }
   
   g_oldcentroids = centroids;
@@ -446,6 +447,12 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
 
     findCentroidsAtScanLocation();
     g_oldcentroids[i] = centroids[0];
+
+    // FINDING ORIENTATION:
+    g_yaw_list[i] = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
+
+    // std::cout << "The angle is: "  << std::endl;
+    // std::cout << yaw  << std::endl;
     
   }
   g_check_task_2 = false;
@@ -460,6 +467,11 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
     std::cout << "This is the colour for cube: " << i  << std::endl;
     std::cout << g_color_order[i]  << std::endl;
     std::cout << "number of pixels found in the cube : "<< g_current_color_order_count[i]  << std::endl;
+
+    std::cout << "the orientation of the cube is : " << std::endl;
+    std::cout << g_yaw_list[i]  << std::endl;
+
+
     
   }
 

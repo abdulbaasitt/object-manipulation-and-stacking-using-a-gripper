@@ -612,6 +612,9 @@ class Cw3Solution
     double eu_distance;
 
 
+    std::vector<double> g_yaw_list;
+
+
 
 
   protected:
