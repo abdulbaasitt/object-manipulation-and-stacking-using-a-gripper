@@ -408,6 +408,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   g_check_task_2 = true;
   std::cout << "Did it CHAnge>?>??::L: "  << g_check_task_2 << std::endl;
   
+  
   for (int i = 0; i < size; i++)
   {
     std::cout << "Trying yo check again ";
