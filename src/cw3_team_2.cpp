@@ -630,6 +630,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
         }
 
     }
+  return true;
 
 }
 
@@ -641,8 +642,288 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   cw3_world_spawner::Task3Service::Response &response)
 {
 
-  /* This service ...
-  */
+  centroids.clear();
+    //initializing variable to scan an area of the robot arm environment
+  float x_scan = 0.5;
+  float x_thrs_min = 0.20;
+  float y_scan = 0.35;
+  float y_thrs_min = 0.15;
+
+  // Scanning for the blue boxes at the first 3 scan locations:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan1;
+
+  for (int i = 0; i < 3; i++)
+  {
+    //function call setting the scan area to specific coordinate
+    scan1 = scan(scan1, x_scan, y_scan, 0.6);
+
+    //setting a threshold to store a centroid within a particular scan area
+    g_x_thrs_min = x_thrs_min;
+    g_y_thrs_min = y_thrs_min;
+    g_x_thrs_max = g_x_thrs_min + 0.6;
+    g_y_thrs_max = g_y_thrs_min + 0.3;
+    
+    //function call to move arm towards scan coordinates
+    bool scan1_success = moveArm(scan1);
+    
+    //storing the centroids founds in scan area to the initialized centroids variable
+    findCentroidsAtScanLocation();
+    
+    //updating the scan area for the next iteration
+    y_scan -= 0.35;
+    y_thrs_min -= 0.3;
+  }
+  
+  // Scanning for the blue boxes at the 4th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan4;
+
+  //function call setting the scan area to specific coordinate
+  scan4 = scan(scan4, 0.233, -0.3, 0.6);
+
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = 0.1;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.1;
+  g_y_thrs_max = g_y_thrs_min + 0.3;
+
+  //function call to move arm towards scan coordinates  
+  bool scan4_success = moveArm(scan4);
+  
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+
+  
+  // Scanning for the blue boxes at the 5th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan5;
+
+  //function call setting the scan area to specific coordinate
+  scan5 = scan(scan5, -0.033, -0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.1;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.2;
+  g_y_thrs_max = g_y_thrs_min + 0.3;
+
+
+  //function call to move arm towards scan coordinates  
+  bool scan5_success = moveArm(scan5);
+
+
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+  
+  
+  // Scanning for the blue boxes at the 6th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan6;
+
+  //function call setting the scan area to specific coordinate
+  scan6 = scan(scan6, -0.3, -0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = -0.45;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates 
+  bool scan6_success = moveArm(scan6);
+
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+
+
+  
+  // Scanning for the blue boxes at the 7th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan7;
+
+  //function call setting the scan area to specific coordinate
+  scan7 = scan(scan7, -0.3, 0.0, 0.6);
+
+  
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = -0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates
+  bool scan7_success = moveArm(scan7);
+  
+
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+
+  
+  // Scanning for the blue boxes at the 8th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan8;
+
+  //function call setting the scan area to specific coordinate
+  scan8 = scan(scan8, -0.3, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.8;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.70;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+  //function call to move arm towards scan coordinates
+  bool scan8_success = moveArm(scan8);
+  
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+  
+
+  // Scanning for the blue boxes at the 9th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan9;
+
+  //function call setting the scan area to specific coordinate
+  scan9 = scan(scan9, -0.033, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = -0.1;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.20;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+    
+
+  //function call to move arm towards scan coordinates
+  bool scan9_success = moveArm(scan9);
+
+
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+
+
+  // Scanning for the blue boxes at the 10th scan location:
+
+  //initializing a variable to scan an area of the robot arm environment
+  geometry_msgs::Pose scan10;
+
+  //function call setting the scan area to specific coordinate
+  scan10 = scan(scan10, 0.233, 0.3, 0.6); 
+
+  //setting a threshold to store a centroid within a particular scan area
+  g_x_thrs_min = 0.1;
+  g_y_thrs_min = 0.15;
+  g_x_thrs_max = g_x_thrs_min + 0.10;
+  g_y_thrs_max = g_y_thrs_min + 0.30;
+
+
+  //function call to move arm towards scan coordinates 
+  bool scan10_success = moveArm(scan10);
+
+
+  //storing the centroids founds in scan area to the initialized centroids variable
+  findCentroidsAtScanLocation();
+
+  std::cout<< "Number of centroids found: "<<centroids.size()<<std::endl;
+
+
+  int size = centroids.size();
+  g_size = size;
+
+  std::cout << "print g_size: " << g_size << std::endl;
+
+  for (int i = 0; i < g_size; i++)
+  {
+    g_Color_2.r = 0.0;
+    g_Color_2.g = 0.0;
+    g_Color_2.b = 0.0;
+    g_color_order.push_back(g_Color_2);
+    g_current_color_order_count.push_back(0);
+    g_yaw_list.push_back(0);
+  }
+  
+  g_oldcentroids = centroids;
+
+  for (int i = 0; i < g_size; i++)
+  {
+    std::cout << "This is centroid " + char(i)  << std::endl;
+    std::cout << g_oldcentroids[i];
+  }
+  
+  // clearing the list that store centroids of any previous centroid values
+  centroids.clear();
+  centroids_max.clear();
+  centroids_min.clear();
+  centroids_max_depth.clear();
+  centroids_min_depth.clear();
+
+  
+  geometry_msgs::Pose checkwell;
+  //g_sub_cloud;
+
+  g_check_task_2 = true;
+  
+  for (int i = 0; i < g_size; i++)
+  {
+    //g_check_task_2 = false;
+    std::cout << "Trying to check again ";
+    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.40);
+
+    // define placing as from above
+    tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+
+    // determine the placing orientation
+    tf2::Quaternion q_object;
+    angle_offset_ = 3.14159 / 4.0;
+    q_object.setRPY(0, 0, angle_offset_);
+    tf2::Quaternion q_result = q_x180deg * q_object;
+    geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
+    checkwell.orientation = place_orientation;
+
+    bool checkwell_success = moveArm(checkwell);
+    
+    //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
+    g_sub_cloud;
+
+    findCentroidsAtScanLocation();
+    g_oldcentroids[i] = centroids[0];
+
+    // FINDING ORIENTATION:
+    g_yaw_list[i] = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
+
+    // std::cout << "The angle is: "  << std::endl;
+    // std::cout << yaw  << std::endl;
+    
+  }
+  g_check_task_2 = false;
+
+
+  for (int i = 0; i < g_size; i++)
+  {
+    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
+    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10; 
+    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
+
+    std::cout << "This is the colour for cube: " << i  << std::endl;
+    std::cout << g_color_order[i]  << std::endl;
+    std::cout << "number of pixels found in the cube : "<< g_current_color_order_count[i]  << std::endl;
+
+    std::cout << "the orientation of the cube is : " << std::endl;
+    std::cout << g_yaw_list[i]  << std::endl;
+
+
+    
+  }  
   
   return true;
 }
@@ -1304,7 +1585,7 @@ Cw3Solution::cloudCallBackOne
   // Perform the filtering
   applyVX (g_cloud_ptr, g_cloud_filtered);
   //applyPT (g_cloud_ptr, g_cloud_filtered);
-  //applyBCF (g_cloud_ptr, g_cloud_filtered);
+  applyBCF (g_cloud_ptr, g_cloud_filtered);
   applyFF (g_cloud_ptr, g_cloud_filtered);
   //applyCF (g_cloud_ptr, g_cloud_filtered);
   
@@ -1603,28 +1884,28 @@ Cw3Solution::applyBCF (PointCPtr &in_cloud_ptr,
   pcl::ConditionAnd<PointT>::Ptr condition (new pcl::ConditionAnd<PointT> ());
 
   // set the Lower bound for red conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, (0.1*255)-40));
   condition->addComparison (lb_red);
 
   // set the Lower bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::GT, (0.1*255)-40));
   condition->addComparison (lb_green);
 
   // set the Lower bound for blue conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::GT, (0.1*255)-25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::GT, (0.1*255)-40));
   condition->addComparison (lb_blue);
 
  
  // set the upper bound for red conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, (0.1*255)+40));
   condition->addComparison (ub_red);
 
   // set the upper bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::LT, (0.1*255)+40));
   condition->addComparison (ub_green);
 
   // set the upper bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::LT, (0.1*255)+25.5));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::LT, (0.1*255)+40));
   condition->addComparison (ub_blue);
 
   g_cf.setInputCloud (in_cloud_ptr);
