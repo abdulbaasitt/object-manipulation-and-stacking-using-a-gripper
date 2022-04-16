@@ -593,6 +593,8 @@ class Cw3Solution
     
     std::string g_pick_object = "";
     std::vector<std::string> g_pick_objects;
+    std::string g_collision_object = "";
+    std::vector<std::string> g_collision_objects;
 
     float g_place_angle_offset_;
 
@@ -611,6 +613,7 @@ class Cw3Solution
     geometry_msgs::Quaternion g_cube_pick_orientation;
 
     double eu_distance;
+    double eu_distance_scan;
 
 
     std::vector<double> g_yaw_list;
@@ -635,7 +638,19 @@ class Cw3Solution
 
     geometry_msgs::Point g_target_point;
 
+    // this is used in defining the origin of the box collision object
+    geometry_msgs::Point box_origin;
+
+    // this is used in defining the dimension of the box collision object
+    geometry_msgs::Vector3 box_dimension;
+
+    // this is used in defining the orientation of the box collision object
+    geometry_msgs::Quaternion box_orientation;
+
     
+    double height;
+    std::vector<double> height_vector;
+    int stack_index;
 
 
 

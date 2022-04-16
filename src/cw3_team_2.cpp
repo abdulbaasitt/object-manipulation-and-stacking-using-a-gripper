@@ -560,7 +560,13 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   /* This service ...
   */
 
+  // clearing the list that store centroids of any previous centroid values
   centroids.clear();
+  centroids_max.clear();
+  centroids_min.clear();
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
+
     //initializing variable to scan an area of the robot arm environment
   float x_scan = 0.5;
   float x_thrs_min = 0.20;
@@ -789,12 +795,12 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   
   
 
-  // clearing the list that store centroids of any previous centroid values
-  centroids.clear();
-  centroids_max.clear();
-  centroids_min.clear();
-  centroids_max_y_x.clear();
-  centroids_max_x_y.clear();
+  // // clearing the list that store centroids of any previous centroid values
+  // centroids.clear();
+  // centroids_max.clear();
+  // centroids_min.clear();
+  // centroids_max_y_x.clear();
+  // centroids_max_x_y.clear();
   
   geometry_msgs::Pose scan2;
   //g_sub_cloud;
@@ -819,16 +825,15 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
     geometry_msgs::Quaternion scan2_orientation = tf2::toMsg(q_result);
     scan2.orientation = scan2_orientation;
 
-
-    //setting a threshold to store a centroid within a particular scan area
-    g_x_thrs_min = g_oldcentroids[i].point.x - 0.04;
-    g_y_thrs_min = g_oldcentroids[i].point.y - 0.04;
-    g_x_thrs_max = g_oldcentroids[i].point.x + 0.04;
-    g_y_thrs_max = g_oldcentroids[i].point.x + 0.04;
+    // //setting a threshold to store a centroid within a particular scan area
+    // g_x_thrs_min = g_oldcentroids[i].point.x - 0.04;
+    // g_y_thrs_min = g_oldcentroids[i].point.y - 0.04;
+    // g_x_thrs_max = g_oldcentroids[i].point.x + 0.04;
+    // g_y_thrs_max = g_oldcentroids[i].point.x + 0.04;
 
     bool scan2_success = moveArm(scan2);
     
-    findCentroidsAtScanLocation();
+    // findCentroidsAtScanLocation();
 
     
   }
@@ -846,10 +851,231 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
     std::cout << "number of pixels found in the cube : "<< g_current_color_order_count[i]  << std::endl;
     std::cout << "the orientation of the cube is : " << std::endl;
     std::cout << g_yaw_list[i]  << std::endl;
+
+    height = centroids_max[i].z;
+    height_vector.push_back(height);
+
+    if(((((g_color_order[i].r) > 0.0) && ((g_color_order[i].r) < 0.21))
+      &&(((g_color_order[i].g) > 0.0) && ((g_color_order[i].g) < 0.21))
+      &&(((g_color_order[i].b) > 0.0) && ((g_color_order[i].b) < 0.21)))
+      ||(isnan(g_color_order[i].r)))
+    {
+
+      //////////////////////////////////////////////////////////////////////////////////
+      /////// ADDING COLLISION OBJECT //////////////////////////////////////////////////
+
+      g_collision_object = std::to_string(i);
+      //g_collision_objects.push_back(g_collision_object);
+
+      // this is used in defining the origin of the box collision object
+      box_origin = origin(box_origin, g_oldcentroids[i].point.x , g_oldcentroids[i].point.y, g_oldcentroids[i].point.z);
+
+      // this is used in defining the dimension of the box collision object
+      box_dimension = dimension(box_dimension, 0.040, 0.040, (height+0.02));
+
+      // this is used in defining the orientation of the box collision object
+      box_orientation = orientation(box_orientation, 0.0, 0.0, (g_yaw_list[i]+(3.14159 / 4.0)), 1.0);
+
+      // function call to add a box collision object with the arguments defined above
+      addCollisionObject(g_collision_object,box_origin,box_dimension,box_orientation);
+
+      //////////////////////////////////////////////////////////////////////////////////
+      
+      //vector<int>::iterator it = g_color_order.begin() + i;
+      g_color_order.erase(i);
+      g_current_color_order_count.erase(i);
+      g_yaw_list.erase(i);
+      g_oldcentroids.erase(i);
+      centroids.erase(i);
+      centroids_max.erase(i);
+      centroids_min.erase(i);
+      centroids_max_y_x.erase(i);
+      centroids_max_x_y.erase(i);
+      height_vector.erase(i);
+
+    }
     
   }
 
+  stack_index = std::max_element(height_vector.begin(),height_vector.end()) - height_vector.begin();
+
+  g_number_of_cubes_in_recorded_stack = 0;
+
+  g_number_of_cubes_in_recorded_stack = round(((centroids_max[stack_index].z)-0.017)/0.04);
+
+
+  // Initializing color array and cube pixel counter, used to find an average rgb value for each cube
+  for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+  {
+    g_Color.r = 0.0;
+    g_Color.g = 0.0;
+    g_Color.b = 0.0;
+    g_current_stack_colours.push_back(g_Color);
+    g_current_stack_cube_color_count.push_back(0);
+  }
   
+  // FINDING ORIENTATION:
+  double yaw = g_yaw_list[stack_index];
+
+  std::cout << "The angle is: "  << std::endl;
+  std::cout << yaw  << std::endl;
+
+
+  geometry_msgs::Pose check_col;
+  check_col.position = g_oldcentroids[stack_index].point;
+  check_col.position.y = check_col.position.y + 0.15;
+  check_col.position.z = 0.35;
+
+
+  g_pt_world_lb.point.x = g_oldcentroids[stack_index].point.x - 0.02;
+  g_pt_world_lb.point.y = g_oldcentroids[stack_index].point.y - 0.02;
+  g_pt_world_ub.point.x = g_oldcentroids[stack_index].point.x + 0.02;
+  g_pt_world_ub.point.y = g_oldcentroids[stack_index].point.y + 0.02;
+
+  //yaw_line_of_sight = atan2(,((centroids_max[0].y) - (check_col.position.y)));
+  // Line of sight to stack vector
+  float dx = (-(centroids_max[stack_index].x) + (check_col.position.x));
+  float dy = (-(centroids_max[stack_index].y) + (check_col.position.y));
+  float dz = (-(0.10) + (check_col.position.z));
+
+  // determine the visual check orientation
+  // define placing as from above
+  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+  tf2::Quaternion q_object;
+  tf2::Quaternion q_result;
+  q_object.setRPY(-M_PI / 4, 0 , 0);
+  //q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
+  q_result = q_x180deg * q_object;
+  check_col.orientation = tf2::toMsg(q_result);
+  moveArm(check_col);
+
+  //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
+  g_sub_cloud;
+
+  //size = g_current_stack_colours.size();
+  
+  if (g_number_of_cubes_in_recorded_stack > 0)
+  {
+    for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+    {
+      g_current_stack_colours[i].r = ((g_current_stack_colours[i].r)/(g_current_stack_cube_color_count[i]))/255;
+      g_current_stack_colours[i].g = ((g_current_stack_colours[i].g)/(g_current_stack_cube_color_count[i]))/255;
+      g_current_stack_colours[i].b = ((g_current_stack_colours[i].b)/(g_current_stack_cube_color_count[i]))/255;
+      std::cout << "This is the colour for cube: ";
+      std::cout << i  << std::endl;
+      std::cout << "Colour: "  << std::endl;
+      std::cout << g_current_stack_colours[i]  << std::endl;
+    }
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////
+  /////// ADDING COLLISION OBJECT //////////////////////////////////////////////////
+
+  g_collision_object = std::to_string(stack_index);
+  //g_collision_objects.push_back(g_collision_object);
+
+  // this is used in defining the origin of the box collision object
+  box_origin = origin(box_origin, g_oldcentroids[stack_index].point.x , g_oldcentroids[stack_index].point.y, 0.02);
+
+  // this is used in defining the dimension of the box collision object
+  box_dimension = dimension(box_dimension, 0.040, 0.040, (height_vector[stack_index]+0.02));
+
+  // this is used in defining the orientation of the box collision object
+  box_orientation = orientation(box_orientation, 0.0, 0.0, (g_yaw_list[stack_index]+(3.14159 / 4.0)), 1.0);
+
+  // function call to add a box collision object with the arguments defined above
+  addCollisionObject(g_collision_object,box_origin,box_dimension,box_orientation);
+
+  //////////////////////////////////////////////////////////////////////////////////
+  //vector<int>::iterator it = g_color_order.begin() + stack_index;
+
+  // std::vector<int>::iterator it;
+  // it = height_vector.begin() + stack_index;
+  
+  stack_index = std::max_element(height_vector.begin(),height_vector.end()) - height_vector.begin();
+  g_color_order.erase(stack_index);
+  g_current_color_order_count.erase(stack_index);
+  g_yaw_list.erase(stack_index);
+  g_oldcentroids.erase(stack_index);
+  centroids.erase(stack_index);
+  centroids_max.erase(stack_index);
+  centroids_min.erase(stack_index);
+  centroids_max_y_x.erase(stack_index);
+  centroids_max_x_y.erase(stack_index);
+  //height_vector.erase(stack_index);
+
+
+
+  std::vector<std_msgs::ColorRGBA> list_of_colours;
+ 
+  list_of_colours = g_current_stack_colours;
+  
+  
+  g_index_of_cubes_to_stack.clear();
+  
+  
+  g_num_of_cubes_to_stack = list_of_colours.size();
+
+  for (int i = 0; i < 3; i++)
+  {
+    g_index_of_cubes_to_stack.push_back(0);
+  }
+  
+  std::cout << "there are this many number of cubes to stack : " << g_num_of_cubes_to_stack << std::endl;
+  
+  for(int i = 0; i < g_num_of_cubes_to_stack; i++)
+  {
+    std::cout << "Cube : " << i << std::endl;
+    std::cout << list_of_colours[i];
+  }
+  
+  
+
+  for(int i = 0; i < g_num_of_cubes_to_stack; i++)
+  {
+    for(int j = 0; j < size; j++)
+      {
+        if(abs(list_of_colours[i].r - g_color_order[j].r) <= 0.15 && abs(list_of_colours[i].g - g_color_order[j].g) <= 0.3 && abs(list_of_colours[i].b - g_color_order[j].b) <= 0.3)
+        {
+          std::cout << "The Cubes matching the first request is cube : " << i << std::endl;
+
+          if (std::find(g_index_of_cubes_to_stack.begin(), g_index_of_cubes_to_stack.end(), j) != g_index_of_cubes_to_stack.end() && g_index_of_cubes_to_stack.size() > 0 ) 
+          {
+            std::cout << "Element found"<< std::endl;
+          }
+          else
+          {
+            g_index_of_cubes_to_stack[i] = j;
+            std::cout << g_color_order[j]  << std::endl;
+            std::cout <<"index of cube again: " << g_index_of_cubes_to_stack[i]  << std::endl;
+            break;
+          }
+          
+        }
+      }
+  }
+
+  // determine the placing location
+  g_target_point.x = request.stack_point.x;
+  g_target_point.y = request.stack_point.y;
+  g_target_point.z = 0.03;
+
+  // // determine the placing orientation
+  // g_place_angle_offset_ = request.stack_rotation;
+
+  g_place_angle_offset_ = 0.0;
+
+  bool success = pickAndPlaceTask2();
+  if (not success) 
+  {
+    ROS_ERROR("Task 2 Pick and Place Failed");
+    return false;
+  }
+
+
+
+
   return true;
 }
 
@@ -1056,17 +1282,14 @@ Cw3Solution::addFloorAndBoxCollisionObjects(geometry_msgs::PointStamped goal_loc
 
 
   // this is used in defining the origin of box collision object
-  geometry_msgs::Point box_origin;
   box_origin = origin(box_origin, goal_loc.point.x, goal_loc.point.y, 0.0);
 
 
   // this is used in defining the dimension of the box collision object
-  geometry_msgs::Vector3 box_dimension;
   box_dimension = dimension(box_dimension, 0.22, 0.22, 0.45);
 
 
   // this is used in defining the orientation of the box collision object
-  geometry_msgs::Quaternion box_orientation;
   box_orientation = orientation(box_orientation, 0.0, 0.0,0.0,1.0);
 
 
@@ -1442,7 +1665,6 @@ Cw3Solution::pickAndPlaceTask2()
   /* This function places an object using a pose. The given point is where the
   centre of the gripper fingers will converge */
 
-
   if (g_num_of_cubes_to_stack > 0)
   {
 
@@ -1519,15 +1741,12 @@ Cw3Solution::pickAndPlaceTask2()
         /////// ADDING COLLISION OBJECT //////////////////////////////////////////////////
 
         // this is used in defining the origin of the box collision object
-        geometry_msgs::Point box_origin;
         box_origin = origin(box_origin, g_target_point.x , g_target_point.y, g_target_point.z);
 
         // this is used in defining the dimension of the box collision object
-        geometry_msgs::Vector3 box_dimension;
         box_dimension = dimension(box_dimension, 0.040, 0.040, 0.040);
 
         // this is used in defining the orientation of the box collision object
-        geometry_msgs::Quaternion box_orientation;
         box_orientation = orientation(box_orientation, 0.0, 0.0, g_place_angle_offset_, 1.0);
 
         // function call to add a box collision object with the arguments defined above
@@ -1561,7 +1780,7 @@ Cw3Solution::cloudCallBackOne
   // Perform the filtering
   applyVX (g_cloud_ptr, g_cloud_filtered);
   //applyPT (g_cloud_ptr, g_cloud_filtered);
-  applyBCF (g_cloud_ptr, g_cloud_filtered);
+  //applyBCF (g_cloud_ptr, g_cloud_filtered);
   applyFF (g_cloud_ptr, g_cloud_filtered);
   //applyCF (g_cloud_ptr, g_cloud_filtered);
   
@@ -1663,8 +1882,6 @@ Cw3Solution::cloudCallBackOne
         
           g_pt_world_lb.header.frame_id = "panda_link0";
           g_pt_world_lb.header.stamp = ros::Time (0);
-          g_pt_world_lb.point.x = -2;
-          g_pt_world_lb.point.y = -2;
           g_pt_world_lb.point.z = ((0.03)+((i)*0.04));
           try
           {
@@ -1680,8 +1897,6 @@ Cw3Solution::cloudCallBackOne
 
           g_pt_world_ub.header.frame_id = "panda_link0";
           g_pt_world_ub.header.stamp = ros::Time (0);
-          g_pt_world_ub.point.x = 2;
-          g_pt_world_ub.point.y = 2;
           g_pt_world_ub.point.z = (((i+1)*0.04));
           try
           {
@@ -1716,7 +1931,7 @@ Cw3Solution::cloudCallBackOne
         {
           eu_distance = sqrt(pow((g_current_centroid.point.x - g_oldcentroids[i].point.x), 2) + pow((g_current_centroid.point.y - g_oldcentroids[i].point.y), 2) * 1.0);
           
-          if (eu_distance < 0.001)
+          if (eu_distance < 0.008)
           {
             
             g_color_order[i].r = g_color_order[i].r + cloud_cluster->points[nIndex].r;
