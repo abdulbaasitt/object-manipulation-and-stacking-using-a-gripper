@@ -334,12 +334,11 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
       at the request location
   
   */
+
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
-  g_oldcentroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-
   centroids_max_y_x.clear();
   centroids_max_x_y.clear();
   g_color_order.clear();
@@ -417,6 +416,7 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   }
   
   
+
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
   centroids_max.clear();
@@ -755,6 +755,7 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   std::cout<< "Number of centroids found: "<<centroids.size()<<std::endl;
 
 
+
   int size = centroids.size();
   g_size = size;
 
@@ -776,51 +777,59 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   {
     std::cout << "This is centroid " + char(i)  << std::endl;
     std::cout << g_oldcentroids[i];
+
+    // finding the accurate value for the centroid to the nearest second half decimal for accurate value.
+    g_oldcentroids[i].point.x = floor(((g_oldcentroids[i].point.x)*20)+0.5)/20;
+    g_oldcentroids[i].point.y = floor(((g_oldcentroids[i].point.y)*20)+0.5)/20;
+
+    // FINDING ORIENTATION AND STORING IN LIST:
+    g_yaw_list[i] = atan2(((centroids_max[i].x) - (centroids_max_y_x[i])),((centroids_max[i].y) - (centroids_max_x_y[i])));
+
   }
   
+  
+
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-  centroids_max_depth.clear();
-  centroids_min_depth.clear();
-
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
   
-  geometry_msgs::Pose checkwell;
+  geometry_msgs::Pose scan2;
   //g_sub_cloud;
 
   g_check_task_2 = true;
   
+  //looping through all the centroids
   for (int i = 0; i < g_size; i++)
   {
     //g_check_task_2 = false;
-    std::cout << "Trying to check again ";
-    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.40);
+    std::cout << "Performing second scan at each centroid found for accurate centroid and orientation detection: "  << std::endl;
+    scan2  = scan(scan2,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.60);
 
+    // defining scanning orientation:
     // define placing as from above
     tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-
-    // determine the placing orientation
     tf2::Quaternion q_object;
-    angle_offset_ = 3.14159 / 4.0;
+    tf2::Quaternion q_result;
+    angle_offset_ = 0;
     q_object.setRPY(0, 0, angle_offset_);
-    tf2::Quaternion q_result = q_x180deg * q_object;
-    geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
-    checkwell.orientation = place_orientation;
+    q_result = q_x180deg * q_object;
+    geometry_msgs::Quaternion scan2_orientation = tf2::toMsg(q_result);
+    scan2.orientation = scan2_orientation;
 
-    bool checkwell_success = moveArm(checkwell);
+
+    //setting a threshold to store a centroid within a particular scan area
+    g_x_thrs_min = g_oldcentroids[i].point.x - 0.04;
+    g_y_thrs_min = g_oldcentroids[i].point.y - 0.04;
+    g_x_thrs_max = g_oldcentroids[i].point.x + 0.04;
+    g_y_thrs_max = g_oldcentroids[i].point.x + 0.04;
+
+    bool scan2_success = moveArm(scan2);
     
-    //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
-    g_sub_cloud;
-
     findCentroidsAtScanLocation();
-    g_oldcentroids[i] = centroids[0];
 
-    // FINDING ORIENTATION:
-    g_yaw_list[i] = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
-
-    // std::cout << "The angle is: "  << std::endl;
-    // std::cout << yaw  << std::endl;
     
   }
   g_check_task_2 = false;
@@ -828,20 +837,18 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
 
   for (int i = 0; i < g_size; i++)
   {
-    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
-    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10; 
-    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
+    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 10) / 10;
+    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 10) / 10; 
+    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 10) / 10;
 
     std::cout << "This is the colour for cube: " << i  << std::endl;
     std::cout << g_color_order[i]  << std::endl;
     std::cout << "number of pixels found in the cube : "<< g_current_color_order_count[i]  << std::endl;
-
     std::cout << "the orientation of the cube is : " << std::endl;
     std::cout << g_yaw_list[i]  << std::endl;
-
-
     
-  }  
+  }
+
   
   return true;
 }
