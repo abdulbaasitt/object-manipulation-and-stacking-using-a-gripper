@@ -264,6 +264,18 @@ class Cw3Solution
     addCollisionObject(std::string object_name, geometry_msgs::Point centre, 
       geometry_msgs::Vector3 dimensions, geometry_msgs::Quaternion orientation);
 
+    /** \brief MoveIt function for adding a cuboid attached collision object in RViz
+      * and the MoveIt planning scene which can work even with octomap activated.
+      *
+      * \input[in] object_name name for the new object to be added
+      * \input[in] centre point at which to add the new object
+      * \input[in] dimensions dimensions of the cuboid to add in x,y,z
+      * \input[in] orientation rotation to apply to the cuboid before adding
+      */
+    void
+    addAttachedCollisionObject(std::string object_name, geometry_msgs::Point centre, 
+      geometry_msgs::Vector3 dimensions, geometry_msgs::Quaternion orientation);
+
     /** \brief Remove a collision object from the planning scene.
       * 
       * \input[in] object_name for the object to be removed
@@ -455,11 +467,6 @@ class Cw3Solution
     /** \brief Stores x coordinate corresponding to the max y bound of centroid */
     double g_current_centroid_max_y_x;
 
-    /** \brief Max depth of current centroid found */
-    double g_current_centroid_max_depth;
-
-    /** \brief Min depth of current centroid found */
-    double g_current_centroid_min_depth;
 
     /** \brief All centroids found */
     std::vector<geometry_msgs::PointStamped> g_centroids;
@@ -473,11 +480,7 @@ class Cw3Solution
     /** \brief All min points of centroids found */
     std::vector<geometry_msgs::Point> g_centroids_min;
 
-    /** \brief Max depth of all centroids found */
-    std::vector<double> g_centroids_max_depth;
 
-    /** \brief Min depth of all centroids found */
-    std::vector<double> g_centroids_min_depth;
 
     /** \brief ROS pose publishers. */
     ros::Publisher g_pub_pose;
@@ -570,11 +573,7 @@ class Cw3Solution
     /** \brief Stores all min points of centroids found for the requested scan */
     std::vector<geometry_msgs::Point> centroids_min;
 
-    /** \brief Stores the max depth of all centroids found for the requested scan */
-    std::vector<double> centroids_max_depth;
 
-    /** \brief Stores the min depth of all centroids found for the requested scan */
-    std::vector<double> centroids_min_depth;
 
     
     // Comment these later ...
@@ -592,6 +591,7 @@ class Cw3Solution
     bool g_check_task_2 = false;
     
     std::string g_pick_object = "";
+    std::vector<std::string> g_pick_objects;
 
     float g_place_angle_offset_;
 
@@ -603,7 +603,7 @@ class Cw3Solution
     std::vector<std_msgs::ColorRGBA> g_color_order;
 
     bool
-    placeTask2(geometry_msgs::Point position);
+    pickAndPlaceTask2();
 
     geometry_msgs::Point g_cube_pick_origin;
     geometry_msgs::Vector3 g_cube_pick_dimension;
@@ -619,6 +619,22 @@ class Cw3Solution
     ros::NodeHandle node_handle;
     ros::Publisher planning_scene_diff_publisher = node_handle.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
+    std::vector<double> g_centroids_max_y_x;
+    std::vector<double> g_centroids_max_x_y;
+    std::vector<double> centroids_max_y_x;
+    std::vector<double> centroids_max_x_y;
+
+    bool g_pick_success;
+    bool g_place_success;
+    bool g_move_success;
+    
+    std::vector<int> g_index_of_cubes_to_stack;
+    int g_num_of_cubes_to_stack;
+
+
+    geometry_msgs::Point g_target_point;
+
+    
 
 
 

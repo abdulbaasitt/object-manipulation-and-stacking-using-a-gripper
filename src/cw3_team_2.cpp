@@ -103,8 +103,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   centroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-  centroids_max_depth.clear();
-  centroids_min_depth.clear();
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
 
   int size = 0;
   float yaw = 0.0;
@@ -155,8 +155,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   centroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-  centroids_max_depth.clear();
-  centroids_min_depth.clear();
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
 
   //setting a threshold to store a centroid within a particular scan area
   g_x_thrs_min = centroids[0].point.x - 0.4;
@@ -200,11 +200,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << g_current_centroid_max_y_x  << std::endl;
         
 
-        std::cout << "The max depth of this centroid is: "  << std::endl;
-        std::cout << centroids_max_depth[i]  << std::endl;
-        std::cout << "The min depth of this centroid is: "  << std::endl;
-        std::cout << centroids_min_depth[i]  << std::endl;
-
         std::cout << "The number of cubes in this stack is: "  << std::endl;
         std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
       }
@@ -233,13 +228,14 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   float dy = (-(centroids_max[0].y) + (check_col.position.y));
   float dz = (-(0.10) + (check_col.position.z));
 
-  // define end effector quaternion as from above
-  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
   // determine the visual check orientation
+  // define placing as from above
+  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
   tf2::Quaternion q_object;
+  tf2::Quaternion q_result;
   q_object.setRPY(-M_PI / 4, 0 , 0);
   //q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
-  tf2::Quaternion q_result = q_x180deg * q_object;
+  q_result = q_x180deg * q_object;
   geometry_msgs::Quaternion check_orientation;
   check_orientation = tf2::toMsg(q_result);
   
@@ -343,8 +339,9 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   g_oldcentroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-  centroids_max_depth.clear();
-  centroids_min_depth.clear();
+
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
   g_color_order.clear();
   g_current_color_order_count.clear();
 
@@ -352,7 +349,6 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
 
   int size = 0;
 
-  g_place_angle_offset_ = request.stack_rotation;
 
 
 
@@ -384,8 +380,6 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
     findCentroidsAtScanLocation();
 
     
-    
-    
     //updating the scan area for the next iteration
     y_scan -= 0.35;
     y_thrs_min -= 0.30;
@@ -412,51 +406,58 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   {
     std::cout << "This is centroid " + char(i)  << std::endl;
     std::cout << g_oldcentroids[i];
+
+    // finding the accurate value for the centroid to the nearest second half decimal for accurate value.
+    g_oldcentroids[i].point.x = floor(((g_oldcentroids[i].point.x)*20)+0.5)/20;
+    g_oldcentroids[i].point.y = floor(((g_oldcentroids[i].point.y)*20)+0.5)/20;
+
+    // FINDING ORIENTATION AND STORING IN LIST:
+    g_yaw_list[i] = atan2(((centroids_max[i].x) - (centroids_max_y_x[i])),((centroids_max[i].y) - (centroids_max_x_y[i])));
+
   }
+  
   
   // clearing the list that store centroids of any previous centroid values
   centroids.clear();
   centroids_max.clear();
   centroids_min.clear();
-  centroids_max_depth.clear();
-  centroids_min_depth.clear();
-
+  centroids_max_y_x.clear();
+  centroids_max_x_y.clear();
   
-  geometry_msgs::Pose checkwell;
+  geometry_msgs::Pose scan2;
   //g_sub_cloud;
 
   g_check_task_2 = true;
   
+  //looping through all the centroids
   for (int i = 0; i < g_size; i++)
   {
     //g_check_task_2 = false;
-    std::cout << "Trying to check again ";
-    checkwell  = scan(checkwell,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.40);
+    std::cout << "Performing second scan at each centroid found for accurate centroid and orientation detection: "  << std::endl;
+    scan2  = scan(scan2,g_oldcentroids[i].point.x-0.05,g_oldcentroids[i].point.y, 0.60);
 
+    // defining scanning orientation:
     // define placing as from above
     tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-
-    // determine the placing orientation
     tf2::Quaternion q_object;
-    angle_offset_ = 3.14159 / 4.0;
+    tf2::Quaternion q_result;
+    angle_offset_ = 0;
     q_object.setRPY(0, 0, angle_offset_);
-    tf2::Quaternion q_result = q_x180deg * q_object;
-    geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
-    checkwell.orientation = place_orientation;
+    q_result = q_x180deg * q_object;
+    geometry_msgs::Quaternion scan2_orientation = tf2::toMsg(q_result);
+    scan2.orientation = scan2_orientation;
 
-    bool checkwell_success = moveArm(checkwell);
+
+    //setting a threshold to store a centroid within a particular scan area
+    g_x_thrs_min = g_oldcentroids[i].point.x - 0.04;
+    g_y_thrs_min = g_oldcentroids[i].point.y - 0.04;
+    g_x_thrs_max = g_oldcentroids[i].point.x + 0.04;
+    g_y_thrs_max = g_oldcentroids[i].point.x + 0.04;
+
+    bool scan2_success = moveArm(scan2);
     
-    //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
-    g_sub_cloud;
-
     findCentroidsAtScanLocation();
-    g_oldcentroids[i] = centroids[0];
 
-    // FINDING ORIENTATION:
-    g_yaw_list[i] = atan2(((centroids_max[0].x) - (g_current_centroid_max_y_x)),((centroids_max[0].y) - (g_current_centroid_max_x_y)));
-
-    // std::cout << "The angle is: "  << std::endl;
-    // std::cout << yaw  << std::endl;
     
   }
   g_check_task_2 = false;
@@ -464,14 +465,13 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
 
   for (int i = 0; i < g_size; i++)
   {
-    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
-    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10; 
-    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 2 * 10) / 10;
+    g_color_order[i].r = ceil( ((g_color_order[i].r)/(g_current_color_order_count[i]))/255 * 10) / 10;
+    g_color_order[i].g = ceil( ((g_color_order[i].g)/(g_current_color_order_count[i]))/255 * 10) / 10; 
+    g_color_order[i].b = ceil( ((g_color_order[i].b)/(g_current_color_order_count[i]))/255 * 10) / 10;
 
     std::cout << "This is the colour for cube: " << i  << std::endl;
     std::cout << g_color_order[i]  << std::endl;
     std::cout << "number of pixels found in the cube : "<< g_current_color_order_count[i]  << std::endl;
-
     std::cout << "the orientation of the cube is : " << std::endl;
     std::cout << g_yaw_list[i]  << std::endl;
 
@@ -483,33 +483,29 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
  
   list_of_colours.clear();
   
-  std::vector<int> index_of_cubes_to_stack;
   
-  index_of_cubes_to_stack.clear();
+  g_index_of_cubes_to_stack.clear();
   
   list_of_colours = request.stack_colours;
   
-  int num_of_colours = list_of_colours.size();
+  g_num_of_cubes_to_stack = list_of_colours.size();
 
   for (int i = 0; i < 3; i++)
   {
-    index_of_cubes_to_stack.push_back(0);
+    g_index_of_cubes_to_stack.push_back(0);
   }
   
-  std::cout << "there are this many number of cubes to stack : " << num_of_colours << std::endl;
+  std::cout << "there are this many number of cubes to stack : " << g_num_of_cubes_to_stack << std::endl;
   
-  for(int i = 0; i < num_of_colours; i++)
+  for(int i = 0; i < g_num_of_cubes_to_stack; i++)
   {
     std::cout << "Cube : " << i << std::endl;
     std::cout << list_of_colours[i];
   }
   
   
-  // std::vector<geometry_msgs::PointStamped> final_centroids;
 
-  // final_centroids.clear();
-
-  for(int i = 0; i < num_of_colours; i++)
+  for(int i = 0; i < g_num_of_cubes_to_stack; i++)
   {
     for(int j = 0; j < size; j++)
       {
@@ -517,18 +513,15 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
         {
           std::cout << "The Cubes matching the first request is cube : " << i << std::endl;
 
-          if (std::find(index_of_cubes_to_stack.begin(), index_of_cubes_to_stack.end(), j) != index_of_cubes_to_stack.end() && index_of_cubes_to_stack.size() > 0 ) 
+          if (std::find(g_index_of_cubes_to_stack.begin(), g_index_of_cubes_to_stack.end(), j) != g_index_of_cubes_to_stack.end() && g_index_of_cubes_to_stack.size() > 0 ) 
           {
-              std::cout << "Element found"<< std::endl;
+            std::cout << "Element found"<< std::endl;
           }
           else
           {
-            index_of_cubes_to_stack[i] = j;
-          // final_centroids[i] = centroids[j];
+            g_index_of_cubes_to_stack[i] = j;
             std::cout << g_color_order[j]  << std::endl;
-          // std::cout << "centroid location " << centroids[j]  << std::endl;
-            std::cout <<"index of cube again: " << index_of_cubes_to_stack[i]  << std::endl;
-          // std::cout << "final centroids _j " << final_centroids[j]  << std::endl;
+            std::cout <<"index of cube again: " << g_index_of_cubes_to_stack[i]  << std::endl;
             break;
           }
           
@@ -536,101 +529,23 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
       }
   }
 
-  for  (int i = 0; i < index_of_cubes_to_stack.size(); i++)
+  // determine the placing location
+  g_target_point.x = request.stack_point.x;
+  g_target_point.y = request.stack_point.y;
+  g_target_point.z = 0.03;
+
+  // determine the placing orientation
+  g_place_angle_offset_ = request.stack_rotation;
+
+  bool success = pickAndPlaceTask2();
+  if (not success) 
   {
-    std::cout <<"AFTER LOOP_INDEX_OF_CUBE_IN_STACK: " << index_of_cubes_to_stack[i]  << std::endl;
+    ROS_ERROR("Task 2 Pick and Place Failed");
+    return false;
   }
 
 
-    if (num_of_colours > 0)
-    {
-        //looping through all the centroids
 
-
-        geometry_msgs::Point target_point;
-        target_point.x = request.stack_point.x;
-        target_point.y = request.stack_point.y;
-        target_point.z = 0.03;
-
-        tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-
-    // determine the placing orientation
-        tf2::Quaternion q_object;
-        q_object.setRPY(0, 0, g_place_angle_offset_);
-        tf2::Quaternion q_result = q_x180deg * q_object;
-        geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
-        
-        
-        geometry_msgs::Point box_origin;
-        box_origin = origin(box_origin, target_point.x , target_point.y, 0.0);
-
-        // geometry_msgs::Point box_origin_2;
-        // box_origin = origin(box_origin_2, target_point.x - 0.04 , target_point.y - 0.04, 0.0);
-
-
-        // this is used in defining the dimension of the box collision object
-        geometry_msgs::Vector3 box_dimension;
-        box_dimension = dimension(box_dimension, 0.15, 0.15, 0.06);
-
-
-        // this is used in defining the orientation of the box collision object
-        geometry_msgs::Quaternion box_orientation;
-        box_orientation = orientation(box_orientation, place_orientation.x, place_orientation.y, place_orientation.z, place_orientation.w);
-
-
-        // function call to add a box collision object with the arguments defined above
-        addCollisionObject("cube_2",box_origin,box_dimension,box_orientation);
-        // addCollisionObject("cube_3",box_origin_2,box_dimension,box_orientation);
-
-        for (int i = 0; i < num_of_colours; i++)
-        {
-          std::cout << "We are now trying to pick cube:  " + std::to_string(i)  << std::endl;;
-          std::cout <<"index of cube to pick: " << index_of_cubes_to_stack[i]  << std::endl;
-          std::cout <<"point x of index: " << centroids[index_of_cubes_to_stack[i]].point.x << std::endl;
-          std::cout <<"point y of index: " << centroids[index_of_cubes_to_stack[i]].point.y  << std::endl;
-          std::cout <<"point z of index: " << centroids[index_of_cubes_to_stack[i]].point.z  << std::endl;
-          //initializing a variable to store the coordinates of each centroid found
-          geometry_msgs::Point position;
-          position.x = (round(centroids[index_of_cubes_to_stack[i]].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-          position.y = (round(centroids[index_of_cubes_to_stack[i]].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-          position.z = 0.02; 
-
-          // function call to pick an object at the desired coordinate
-          bool pick_success = pick(position);
-
-          removeCollisionObject("cube_2");
-
-          if (not pick_success) 
-          {
-            ROS_ERROR("Object Pick up  failed");
-
-            return false;
-          }
-
-          // function call to move arm towards scan coordinates
-
-          // box_dimension.x = 0.1;
-          // box_dimension.y = 0.1;
-          box_dimension.z = box_dimension.z + 0.04;
-
-          bool move_success = placeTask2(target_point);
-
-          addCollisionObject("cube_2", box_origin, box_dimension, box_orientation);
-          // addCollisionObject("cube_3",box_origin,box_dimension,box_orientation);
-
-          target_point.z = target_point.z + 0.01;
-
-          if (not move_success)
-          {
-            ROS_ERROR("Placing the object failed");
-            
-            return false;
-          }
-        
-        }
-
-    }
-  return true;
 
 }
 
@@ -641,6 +556,9 @@ bool
 Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   cw3_world_spawner::Task3Service::Response &response)
 {
+
+  /* This service ...
+  */
 
   centroids.clear();
     //initializing variable to scan an area of the robot arm environment
@@ -944,8 +862,9 @@ Cw3Solution::findCentroidsAtScanLocation()
   geometry_msgs::PointStamped centroid;
   geometry_msgs::Point centroid_max;
   geometry_msgs::Point centroid_min;
-  double centroid_max_depth;
-  double centroid_min_depth;
+
+  double centroid_max_y_x;
+  double centroid_max_x_y;
 
   g_sub_cloud;
 
@@ -958,8 +877,9 @@ Cw3Solution::findCentroidsAtScanLocation()
       centroid = g_centroids[i];
       centroid_max = g_centroids_max[i];
       centroid_min = g_centroids_min[i];
-      // centroid_max_depth = g_centroids_max_depth[i];
-      // centroid_min_depth = g_centroids_min_depth[i];
+      centroid_max_y_x = g_centroids_max_y_x[i];
+      centroid_max_x_y = g_centroids_max_x_y[i];
+
 
       double x = centroid.point.x;
       double y = centroid.point.y;
@@ -975,10 +895,11 @@ Cw3Solution::findCentroidsAtScanLocation()
         centroids_max.push_back(centroid_max);
         //append max centroid found to the centroids list
         centroids_min.push_back(centroid_min);
-        //append cluster's max depth found to the centroids list
-        centroids_max_depth.push_back(centroid_max_depth);
-        //append cluster's min depth found to the centroids list
-        centroids_min_depth.push_back(centroid_min_depth);
+        //append max centroid found to the centroids list
+        centroids_max_y_x.push_back(centroid_max_y_x);
+        //append max centroid found to the centroids list
+        centroids_max_x_y.push_back(centroid_max_x_y);
+
       }
     }
 
@@ -1024,13 +945,13 @@ Cw3Solution::pickaAndPlaceCube(std::vector<geometry_msgs::PointStamped> centroid
         }
 
         // initializing a variable to store the coordinates of the goal location(where the cube is to be placed)
-        geometry_msgs::Point target_point;
-        target_point.x = goal_loc.x;
-        target_point.y = goal_loc.y;
-        target_point.z = goal_loc.z+0.1;
+        geometry_msgs::Point g_target_point;
+        g_target_point.x = goal_loc.x;
+        g_target_point.y = goal_loc.y;
+        g_target_point.z = goal_loc.z+0.1;
 
         // Function call to place the object picked inside the basket
-        bool move_success = place(target_point);
+        bool move_success = place(g_target_point);
 
         if (not move_success)
         {
@@ -1214,53 +1135,54 @@ Cw3Solution::moveGripper(float width)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// void
-// Cw3Solution::addCollisionObject(std::string object_name,
-//   geometry_msgs::Point centre, geometry_msgs::Vector3 dimensions,
-//   geometry_msgs::Quaternion orientation)
-// {
-//   /* add a collision object in RViz and the MoveIt planning scene */
-
-//   // create a collision object message, and a vector of these messages
-//   moveit_msgs::CollisionObject collision_object;
-//   std::vector<moveit_msgs::CollisionObject> object_vector;
-  
-//   // input header information
-//   collision_object.id = object_name;
-//   collision_object.header.frame_id = base_frame_;
-
-//   // define the primitive and its dimensions
-//   collision_object.primitives.resize(1);
-//   collision_object.primitives[0].type = collision_object.primitives[0].BOX;
-//   collision_object.primitives[0].dimensions.resize(3);
-//   collision_object.primitives[0].dimensions[0] = dimensions.x;
-//   collision_object.primitives[0].dimensions[1] = dimensions.y;
-//   collision_object.primitives[0].dimensions[2] = dimensions.z;
-
-//   // define the pose of the collision object
-//   collision_object.primitive_poses.resize(1);
-//   collision_object.primitive_poses[0].position.x = centre.x;
-//   collision_object.primitive_poses[0].position.y = centre.y;
-//   collision_object.primitive_poses[0].position.z = centre.z;
-//   collision_object.primitive_poses[0].orientation = orientation;
-  
-
-//   // define that we will be adding this collision object 
-//   // hint: what about collision_object.REMOVE?
-//   collision_object.operation = collision_object.ADD;
-
-//   // make the collision object graspable
-//   collision_object.touch_links = std::vector<std::string>{"panda_hand","panda_leftfinger","panda_rightfinger"};
-
-//   // add the collision object to the vector, then apply to planning scene
-//   object_vector.push_back(collision_object);
-//   planning_scene_interface_.applyCollisionObjects(object_vector);
-
-//   return;
-// }
-
 void
 Cw3Solution::addCollisionObject(std::string object_name,
+  geometry_msgs::Point centre, geometry_msgs::Vector3 dimensions,
+  geometry_msgs::Quaternion orientation)
+{
+  /* add a collision object in RViz and the MoveIt planning scene */
+
+  // create a collision object message, and a vector of these messages
+  moveit_msgs::CollisionObject collision_object;
+  std::vector<moveit_msgs::CollisionObject> object_vector;
+  
+  // input header information
+  collision_object.id = object_name;
+  collision_object.header.frame_id = base_frame_;
+
+  // define the primitive and its dimensions
+  collision_object.primitives.resize(1);
+  collision_object.primitives[0].type = collision_object.primitives[0].BOX;
+  collision_object.primitives[0].dimensions.resize(3);
+  collision_object.primitives[0].dimensions[0] = dimensions.x;
+  collision_object.primitives[0].dimensions[1] = dimensions.y;
+  collision_object.primitives[0].dimensions[2] = dimensions.z;
+
+  // define the pose of the collision object
+  collision_object.primitive_poses.resize(1);
+  collision_object.primitive_poses[0].position.x = centre.x;
+  collision_object.primitive_poses[0].position.y = centre.y;
+  collision_object.primitive_poses[0].position.z = centre.z;
+  collision_object.primitive_poses[0].orientation = orientation;
+  
+
+  // define that we will be adding this collision object 
+  // hint: what about collision_object.REMOVE?
+  collision_object.operation = collision_object.ADD;
+
+  // make the collision object graspable
+  //collision_object.touch_links = std::vector<std::string>{"panda_hand","panda_leftfinger","panda_rightfinger"};
+
+  // add the collision object to the vector, then apply to planning scene
+  object_vector.push_back(collision_object);
+  planning_scene_interface_.applyCollisionObjects(object_vector);
+
+  return;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Cw3Solution::addAttachedCollisionObject(std::string object_name,
   geometry_msgs::Point centre, geometry_msgs::Vector3 dimensions,
   geometry_msgs::Quaternion orientation)
 {
@@ -1365,12 +1287,14 @@ Cw3Solution::pick(geometry_msgs::Point position)
   centre of the gripper fingers will converge */
 
   // define grasping as from above
-  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
 
   // determine the grasping orientation
+  // define placing as from above
+  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
   tf2::Quaternion q_object;
-  q_object.setRPY(0, 0, angle_offset_);
-  tf2::Quaternion q_result = q_x180deg * q_object;
+  tf2::Quaternion q_result;
+  q_object.setRPY(0, 0, (angle_offset_+(3.14159 / 4.0)));
+  q_result = q_x180deg * q_object;
   geometry_msgs::Quaternion grasp_orientation = tf2::toMsg(q_result);
 
   // set the desired grasping pose
@@ -1448,13 +1372,13 @@ Cw3Solution::place(geometry_msgs::Point position)
   /* This function places an object using a pose. The given point is where the
   centre of the gripper fingers will converge */
 
+  // determine the placing orientation
   // define placing as from above
   tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-
-  // determine the placing orientation
   tf2::Quaternion q_object;
-  q_object.setRPY(0, 0, angle_offset_);
-  tf2::Quaternion q_result = q_x180deg * q_object;
+  tf2::Quaternion q_result;
+  q_object.setRPY(0, 0, (angle_offset_+(3.14159 / 4.0)));
+  q_result = q_x180deg * q_object;
   geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
 
   // set the desired placing pose
@@ -1506,66 +1430,111 @@ Cw3Solution::place(geometry_msgs::Point position)
 ///////////////////////////////////////////////////////////////////////////////
 
 bool
-Cw3Solution::placeTask2(geometry_msgs::Point position)
+Cw3Solution::pickAndPlaceTask2()
 {
   /* This function places an object using a pose. The given point is where the
   centre of the gripper fingers will converge */
 
-  // define placing as from above
-  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
 
-  // determine the placing orientation
-  tf2::Quaternion q_object;
-  // float g_place_angle_offset_ = request.stack_rotation.data;
-  q_object.setRPY(0, 0, g_place_angle_offset_);
-  tf2::Quaternion q_result = q_x180deg * q_object;
-  geometry_msgs::Quaternion place_orientation = tf2::toMsg(q_result);
-     
-  // set the desired placing pose
-  geometry_msgs::Pose place_pose;
-  place_pose.position = position;
-  place_pose.orientation = place_orientation;
-  place_pose.position.z += z_offset_;
-  // place_pose.position.z += z_offset_task_2;
-
-  // set the desired pre-placing pose
-  geometry_msgs::Pose approach_pose;
-  approach_pose = place_pose;
-  // approach_pose.position.z += approach_distance_task_2;
-  approach_pose.position.z += approach_distance_;
-
-  /* Now perform the place */
-
-  bool success = true;
-
-  ROS_INFO("Begining place operation");
-
-  // move the arm above the place location
-  success *= moveArm(approach_pose);
-
-  if (not success) 
+  if (g_num_of_cubes_to_stack > 0)
   {
-    ROS_ERROR("Moving arm to place approach pose failed");
-    return false;
+
+      for (int i = 0; i < g_num_of_cubes_to_stack; i++)
+      {
+        std::cout << "We are now trying to pick cube:  " + std::to_string(i)  << std::endl;;
+        std::cout <<"index of cube to pick: " << g_index_of_cubes_to_stack[i]  << std::endl;
+        std::cout <<"point x of index: " << g_oldcentroids[g_index_of_cubes_to_stack[i]].point.x << std::endl;
+        std::cout <<"point y of index: " << g_oldcentroids[g_index_of_cubes_to_stack[i]].point.y  << std::endl;
+        std::cout <<"point z of index: " << g_oldcentroids[g_index_of_cubes_to_stack[i]].point.z  << std::endl;
+        //initializing a variable to store the coordinates of each centroid found
+        geometry_msgs::Point position;
+        position.x = (round(g_oldcentroids[g_index_of_cubes_to_stack[i]].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+        position.y = (round(g_oldcentroids[g_index_of_cubes_to_stack[i]].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
+        position.z = 0.03;
+
+        g_pick_object = std::to_string(i);
+        g_pick_objects.push_back(g_pick_object);
+
+        angle_offset_ = g_yaw_list[g_index_of_cubes_to_stack[i]];
+
+
+
+        // function call to pick an object from the identified coordinate
+        g_pick_success = pick(position);
+        if (not g_pick_success) 
+        {
+          ROS_ERROR("Object Pick up  failed");
+
+          return false;
+        }
+        
+        // place the requested cube
+        angle_offset_ = g_place_angle_offset_;
+        g_place_success = place(g_target_point);
+        if (not g_place_success) 
+        {
+          ROS_ERROR("Object Placing failed");
+
+          return false;
+        }
+
+        // open gripper before retracting arm, to avoid collision
+        g_move_success = moveGripper(gripper_open_);
+        if (not g_move_success) 
+        {
+          ROS_ERROR("Opening Gripper failed");
+
+          return false;
+        }
+
+        // determine the appropriate pose to retract arm after depositing object to avoid collision
+        geometry_msgs::Pose target_pose;
+        target_pose.position = g_target_point;
+        target_pose.position.z = 0.3;
+        // define placing as from above
+        tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+        tf2::Quaternion q_object;
+        tf2::Quaternion q_result;
+        q_object.setRPY(0, 0, (angle_offset_+(3.14159 / 4.0)));
+        q_result = q_x180deg * q_object;
+        target_pose.orientation = tf2::toMsg(q_result);
+        // retract arm
+        g_move_success = moveArm(target_pose);
+        if (not g_move_success) 
+        {
+          ROS_ERROR("Retracting arm failed");
+
+          return false;
+        }
+
+
+        //////////////////////////////////////////////////////////////////////////////////
+        /////// ADDING COLLISION OBJECT //////////////////////////////////////////////////
+
+        // this is used in defining the origin of the box collision object
+        geometry_msgs::Point box_origin;
+        box_origin = origin(box_origin, g_target_point.x , g_target_point.y, g_target_point.z);
+
+        // this is used in defining the dimension of the box collision object
+        geometry_msgs::Vector3 box_dimension;
+        box_dimension = dimension(box_dimension, 0.040, 0.040, 0.040);
+
+        // this is used in defining the orientation of the box collision object
+        geometry_msgs::Quaternion box_orientation;
+        box_orientation = orientation(box_orientation, 0.0, 0.0, g_place_angle_offset_, 1.0);
+
+        // function call to add a box collision object with the arguments defined above
+        addCollisionObject(g_pick_objects[i],box_origin,box_dimension,box_orientation);
+
+        //////////////////////////////////////////////////////////////////////////////////
+
+        // Incrementing target point for next deposit
+        g_target_point.z = g_target_point.z + 0.04;
+
+      
+      }
+
   }
-
-  // approach to placing pose
-  success *= moveArm(place_pose);
-
-  if (not success) 
-  {
-    ROS_ERROR("Moving arm to placing pose failed");
-    return false;
-  }
-
-  // open the gripper
-  success *= moveGripper(gripper_open_);
-  if (not success) 
-  {
-    ROS_ERROR("Could not open Gripper");
-    return false;
-  }
-
   return true;
 }
 
@@ -1597,8 +1566,9 @@ Cw3Solution::cloudCallBackOne
   g_centroids.clear();
   g_centroids_max.clear();
   g_centroids_min.clear();
-  // g_centroids_max_depth.clear();
-  // g_centroids_min_depth.clear();
+  g_centroids_max_y_x.clear();
+  g_centroids_max_x_y.clear();
+
 
   g_color_order.clear();
   g_current_color_order_count.clear();
@@ -1688,7 +1658,7 @@ Cw3Solution::cloudCallBackOne
           g_pt_world_lb.header.stamp = ros::Time (0);
           g_pt_world_lb.point.x = -2;
           g_pt_world_lb.point.y = -2;
-          g_pt_world_lb.point.z = ((0.017)+((i)*0.04));
+          g_pt_world_lb.point.z = ((0.03)+((i)*0.04));
           try
           {
             g_listener_.transformPoint (g_input_pc_frame_id_,
@@ -1705,7 +1675,7 @@ Cw3Solution::cloudCallBackOne
           g_pt_world_ub.header.stamp = ros::Time (0);
           g_pt_world_ub.point.x = 2;
           g_pt_world_ub.point.y = 2;
-          g_pt_world_ub.point.z = ((0.017)+((i+1)*0.04));
+          g_pt_world_ub.point.z = (((i+1)*0.04));
           try
           {
             g_listener_.transformPoint (g_input_pc_frame_id_,
@@ -1719,35 +1689,17 @@ Cw3Solution::cloudCallBackOne
           }
 
           
-          // if ((((cloud_cluster->points[nIndex].z) < g_pt_camera_ub.point.z) && ((cloud_cluster->points[nIndex].z) >  g_pt_camera_lb.point.z))
-          //     && (((cloud_cluster->points[nIndex].y) < g_pt_camera_ub.point.y) && ((cloud_cluster->points[nIndex].y) >  g_pt_camera_lb.point.y))
-          //     && (((cloud_cluster->points[nIndex].x) < g_pt_camera_ub.point.x) && ((cloud_cluster->points[nIndex].x) >  g_pt_camera_lb.point.x)))
-          // {
-          //   g_Color.r = cloud_cluster->points[nIndex].r;
-          //   g_Color.g = cloud_cluster->points[nIndex].g;
-          //   g_Color.b = cloud_cluster->points[nIndex].b;
-          //   g_current_stack_colours[i] = g_Color;
-          // }
-
           if (((cloud_world[nIndex].z) < g_pt_world_ub.point.z)&&((cloud_world[nIndex].z) > g_pt_world_lb.point.z))
           {
             
-            if (((cloud_world[nIndex].y) < 2) && ((cloud_world[nIndex].x) < 2) && ((cloud_world[nIndex].y) > -2) && ((cloud_world[nIndex].x) > -2))
-            {
-              
-              g_current_stack_colours[i].r = g_current_stack_colours[i].r + cloud_cluster->points[nIndex].r;
-              g_current_stack_colours[i].g = g_current_stack_colours[i].g + cloud_cluster->points[nIndex].g;
-              g_current_stack_colours[i].b = g_current_stack_colours[i].b + cloud_cluster->points[nIndex].b;
-              //g_current_stack_colours[i] = g_Color;
+            g_current_stack_colours[i].r = g_current_stack_colours[i].r + cloud_cluster->points[nIndex].r;
+            g_current_stack_colours[i].g = g_current_stack_colours[i].g + cloud_cluster->points[nIndex].g;
+            g_current_stack_colours[i].b = g_current_stack_colours[i].b + cloud_cluster->points[nIndex].b;
 
-              g_current_stack_cube_color_count[i] = g_current_stack_cube_color_count[i] + 1;
-              //ROS_ERROR("Color");
-            }
+            g_current_stack_cube_color_count[i] = g_current_stack_cube_color_count[i] + 1;
           }
         }
       }
-      // std::cout << "This is number of cubes on the map : "<< g_size << std::endl;
-      // std::cout << "What value is it set to : "<< g_check_task_2 << std::endl;
 
       if ((g_size > 0) && (g_check_task_2 == true))
       {
@@ -1757,7 +1709,7 @@ Cw3Solution::cloudCallBackOne
         {
           eu_distance = sqrt(pow((g_current_centroid.point.x - g_oldcentroids[i].point.x), 2) + pow((g_current_centroid.point.y - g_oldcentroids[i].point.y), 2) * 1.0);
           
-          if (eu_distance < 0.03)
+          if (eu_distance < 0.001)
           {
             
             g_color_order[i].r = g_color_order[i].r + cloud_cluster->points[nIndex].r;
@@ -1766,25 +1718,21 @@ Cw3Solution::cloudCallBackOne
 
 
             g_current_color_order_count[i] = g_current_color_order_count[i] + 1;
-            //ROS_ERROR("Color");
           }
         }
       }
     }
-
-    // g_current_centroid_max_depth = maxPt.z;
-    // g_current_centroid_min_depth = minPt.z;
-
 
 
 
     g_centroids.push_back(g_current_centroid);
     g_centroids_max.push_back(g_current_centroid_max);
     g_centroids_min.push_back(g_current_centroid_min);
-    // g_centroids_max_depth.push_back(g_current_centroid_max_depth);
-    // g_centroids_min_depth.push_back(g_current_centroid_min_depth);
+    g_centroids_max_y_x.push_back(g_current_centroid_max_y_x);
+    g_centroids_max_x_y.push_back(g_current_centroid_max_x_y);
 
   }
+  
   // Finding centroid pose of the entire filtered cloud to publish
   findCubePose (g_cloud_filtered);
     
@@ -1884,28 +1832,28 @@ Cw3Solution::applyBCF (PointCPtr &in_cloud_ptr,
   pcl::ConditionAnd<PointT>::Ptr condition (new pcl::ConditionAnd<PointT> ());
 
   // set the Lower bound for red conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, (0.1*255)-40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::GT, (0.1*255)-25.5));
   condition->addComparison (lb_red);
 
   // set the Lower bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::GT, (0.1*255)-40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::GT, (0.1*255)-25.5));
   condition->addComparison (lb_green);
 
   // set the Lower bound for blue conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr lb_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::GT, (0.1*255)-40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr lb_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::GT, (0.1*255)-25.5));
   condition->addComparison (lb_blue);
 
  
  // set the upper bound for red conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, (0.1*255)+40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_red(new pcl::PackedRGBComparison<PointT>("r", pcl::ComparisonOps::LT, (0.1*255)+25.5));
   condition->addComparison (ub_red);
 
   // set the upper bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::LT, (0.1*255)+40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_green(new pcl::PackedRGBComparison<PointT>("g", pcl::ComparisonOps::LT, (0.1*255)+25.5));
   condition->addComparison (ub_green);
 
   // set the upper bound for green conditional colour filter
-  pcl::PackedRGBComparison<PointT>::ConstPtr ub_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::LT, (0.1*255)+40));
+  pcl::PackedRGBComparison<PointT>::ConstPtr ub_blue(new pcl::PackedRGBComparison<PointT>("b", pcl::ComparisonOps::LT, (0.1*255)+25.5));
   condition->addComparison (ub_blue);
 
   g_cf.setInputCloud (in_cloud_ptr);
