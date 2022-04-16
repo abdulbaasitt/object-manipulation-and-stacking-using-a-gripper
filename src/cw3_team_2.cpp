@@ -881,18 +881,18 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
 
       //////////////////////////////////////////////////////////////////////////////////
       
-      //vector<int>::iterator it = g_color_order.begin() + i;
-      g_color_order.erase(i);
-      g_current_color_order_count.erase(i);
-      g_yaw_list.erase(i);
-      g_oldcentroids.erase(i);
-      centroids.erase(i);
-      centroids_max.erase(i);
-      centroids_min.erase(i);
-      centroids_max_y_x.erase(i);
-      centroids_max_x_y.erase(i);
-      height_vector.erase(i);
-
+  
+      //stack_index = std::max_element(height_vector.begin(),height_vector.end()) - height_vector.begin();
+      g_color_order.erase(g_color_order.begin() + i);
+      g_current_color_order_count.erase(g_current_color_order_count.begin() + i);
+      g_yaw_list.erase(g_yaw_list.begin() + i);
+      g_oldcentroids.erase(g_oldcentroids.begin() + i);
+      centroids.erase(centroids.begin() + i);
+      centroids_max.erase(centroids_max.begin() + i);
+      centroids_min.erase(centroids_min.begin() + i);
+      centroids_max_y_x.erase(centroids_max_y_x.begin() + i);
+      centroids_max_x_y.erase(centroids_max_x_y.begin() + i);
+      height_vector.erase(height_vector.begin() + i);
     }
     
   }
@@ -990,20 +990,18 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   //////////////////////////////////////////////////////////////////////////////////
   //vector<int>::iterator it = g_color_order.begin() + stack_index;
 
-  // std::vector<int>::iterator it;
-  // it = height_vector.begin() + stack_index;
   
-  stack_index = std::max_element(height_vector.begin(),height_vector.end()) - height_vector.begin();
-  g_color_order.erase(stack_index);
-  g_current_color_order_count.erase(stack_index);
-  g_yaw_list.erase(stack_index);
-  g_oldcentroids.erase(stack_index);
-  centroids.erase(stack_index);
-  centroids_max.erase(stack_index);
-  centroids_min.erase(stack_index);
-  centroids_max_y_x.erase(stack_index);
-  centroids_max_x_y.erase(stack_index);
-  //height_vector.erase(stack_index);
+  //stack_index = std::max_element(height_vector.begin(),height_vector.end()) - height_vector.begin();
+  g_color_order.erase(g_color_order.begin() + stack_index);
+  g_current_color_order_count.erase(g_current_color_order_count.begin() + stack_index);
+  g_yaw_list.erase(g_yaw_list.begin() + stack_index);
+  g_oldcentroids.erase(g_oldcentroids.begin() + stack_index);
+  centroids.erase(centroids.begin() + stack_index);
+  centroids_max.erase(centroids_max.begin() + stack_index);
+  centroids_min.erase(centroids_min.begin() + stack_index);
+  centroids_max_y_x.erase(centroids_max_y_x.begin() + stack_index);
+  centroids_max_x_y.erase(centroids_max_x_y.begin() + stack_index);
+  height_vector.erase(height_vector.begin() + stack_index);
 
 
 
