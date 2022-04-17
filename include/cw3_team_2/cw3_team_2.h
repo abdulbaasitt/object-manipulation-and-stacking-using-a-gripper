@@ -582,7 +582,18 @@ class Cw3Solution
     std_msgs::ColorRGBA g_Color_2;
     std_msgs::ColorRGBA g_current_centroid_colour;
     std::vector<int> g_current_stack_cube_color_count;
-    std::vector<int> g_current_color_order_count;
+
+    /** \brief Colours of all cubes in the stack */
+    std::vector<std_msgs::ColorRGBA> g_colors;
+    std::vector<int> g_colors_count;
+
+    std_msgs::ColorRGBA g_current_color;
+    int g_current_color_count;
+
+    std::vector<std_msgs::ColorRGBA> colors;
+    std::vector<int> colors_count;
+
+
 
     geometry_msgs::PointStamped g_pt_world_lb;
     geometry_msgs::PointStamped g_pt_camera_lb;
@@ -591,9 +602,9 @@ class Cw3Solution
     bool g_check = false;
     bool g_check_task_2 = false;
     
-    std::string g_pick_object = "";
+    std::string g_pick_object = "object";
     std::vector<std::string> g_pick_objects;
-    std::string g_collision_object = "";
+    std::string g_collision_object = "object";
     std::vector<std::string> g_collision_objects;
 
     float g_place_angle_offset_;
@@ -602,8 +613,6 @@ class Cw3Solution
     /** \brief Stores number of cubes found in Task 2 */
     int g_size = 0;
 
-    /** \brief Colours of all cubes in the stack */
-    std::vector<std_msgs::ColorRGBA> g_color_order;
 
     bool
     pickAndPlaceTask2();
@@ -634,6 +643,8 @@ class Cw3Solution
     
     std::vector<int> g_index_of_cubes_to_stack;
     int g_num_of_cubes_to_stack;
+
+    std::vector<int> g_index_of_collision_objects;
 
 
     geometry_msgs::Point g_target_point;
