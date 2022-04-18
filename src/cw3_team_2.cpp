@@ -995,6 +995,22 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
 
 
 
+  // this is used in defining the origin of the floor collision object
+  geometry_msgs::Point floor_origin;
+  floor_origin = origin(floor_origin, 0.0, 0.0, 0.0);
+
+  // this is used in defining the dimension of the floor collision object
+  geometry_msgs::Vector3 floor_dimension;
+  floor_dimension = dimension(floor_dimension, 3.0, 3.0, 0.005);
+
+  // this is used in defining the orientation of the floor collision object
+  geometry_msgs::Quaternion floor_orientation;
+  floor_orientation = orientation(floor_orientation, 0.0, 0.0,0.0,1.0);
+
+
+  // function call to add a floor collision object with the arguments defined above/
+  addCollisionObject("floor",floor_origin,floor_dimension,floor_orientation);
+
 
   
   
