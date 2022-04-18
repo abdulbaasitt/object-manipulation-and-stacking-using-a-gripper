@@ -183,6 +183,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   // findCentroidsAtScanLocation();
 
   size = centroids.size();
+  g_oldcentroids = centroids;
+  stack_index = 0;
   g_number_of_cubes_in_recorded_stack = g_number_of_cubes_in_stack;
 
 
@@ -896,42 +898,66 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
     g_current_stack_cube_color_count.push_back(0);
   }
   
+  std::cout << "This is the centroid of the stack " << std::endl;
+  std::cout << g_oldcentroids[stack_index]  << std::endl;
+
+  std::cout << "The number of cubes in this stack is: "  << std::endl;
+  std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
 
 
   geometry_msgs::Pose check_col;
-  check_col.position = g_oldcentroids[stack_index].point;
-  check_col.position.y = check_col.position.y + 0.15;
-  check_col.position.z = 0.35;
+  
+  // check_col.position = g_oldcentroids[stack_index].point;
+  // check_col.position.y = check_col.position.y + 0.20;
+  // check_col.position.z = 0.35;
 
 
-
-  //yaw_line_of_sight = atan2(,((centroids_max[0].y) - (check_col.position.y)));
-  // Line of sight to stack vector
-  // float dx = (-(centroids_max[stack_index].x) + (check_col.position.x));
-  // float dy = (-(centroids_max[stack_index].y) + (check_col.position.y));
+  // //yaw_line_of_sight = atan2(,((centroids_max[0].y) - (check_col.position.y)));
+  // // Line of sight to stack vector
+  // float dx = (-(centroids_max[0].x) + (check_col.position.x));
+  // float dy = (-(centroids_max[0].y) + (check_col.position.y));
   // float dz = (-(0.10) + (check_col.position.z));
 
-  // determine the visual check orientation
-  // define placing as from above
-  tf2::Quaternion q_x180deg(-1, 0, 0, 0);
-  tf2::Quaternion q_object;
-  tf2::Quaternion q_result;
-  q_object.setRPY(-M_PI / 4, 0 , 0);
-  //q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
-  q_result = q_x180deg * q_object;
-  check_col.orientation = tf2::toMsg(q_result);
-  moveArm(check_col);
+
+  // // determine the visual check orientation
+  // // define placing as from above
+  // tf2::Quaternion q_x180deg(-1, 0, 0, 0);
+  // tf2::Quaternion q_object;
+  // tf2::Quaternion q_result;
+  // q_object.setRPY(-M_PI / 4, 0 , 0);
+  // //q_object.setRPY(-M_PI / 4, -M_PI/2 , -M_PI /4);
+  // q_result = q_x180deg * q_object;
+  // check_col.orientation = tf2::toMsg(q_result);
+  // moveArm(check_col);
 
 
+  check_col = scan(check_col, g_oldcentroids[stack_index].point.x, g_oldcentroids[stack_index].point.y, 0.6); 
 
-
-  std::cout << "there are this many number of cubes in the identified stack : " << g_number_of_cubes_in_recorded_stack << std::endl;
+  bool check_col_success = moveArm(check_col);
 
   //storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
-  //g_sub_cloud;
+  g_sub_cloud;
 
-  //size = g_current_stack_colours.size();
+  std::vector<std_msgs::ColorRGBA> list_of_colours;
+ 
+  //list_of_colours = g_current_stack_colours;
 
+    
+  if (g_number_of_cubes_in_recorded_stack > 0)
+  {
+    for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
+    {
+      g_current_stack_colours[i].r = ceil(((g_current_stack_colours[i].r)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
+      g_current_stack_colours[i].g = ceil(((g_current_stack_colours[i].g)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
+      g_current_stack_colours[i].b = ceil(((g_current_stack_colours[i].b)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
+      std::cout << "This is the colour for cube: ";
+      std::cout << i  << std::endl;
+      std::cout << "Colour: "  << std::endl;
+      std::cout << g_current_stack_colours[i]  << std::endl;
+      list_of_colours.push_back(g_current_stack_colours[i]);
+    }
+  }
+  g_check = false;
 
   //////////////////////////////////////////////////////////////////////////////////
   /////// ADDING COLLISION OBJECT //////////////////////////////////////////////////
@@ -952,23 +978,6 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   addCollisionObject(g_collision_object,box_origin,box_dimension,box_orientation);
 
   //////////////////////////////////////////////////////////////////////////////////
-  //vector<int>::iterator it = colors.begin() + stack_index;
-
-    
-  if (g_number_of_cubes_in_recorded_stack > 0)
-  {
-    for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
-    {
-      g_current_stack_colours[i].r = ceil(((g_current_stack_colours[i].r)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
-      g_current_stack_colours[i].g = ceil(((g_current_stack_colours[i].g)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
-      g_current_stack_colours[i].b = ceil(((g_current_stack_colours[i].b)/(g_current_stack_cube_color_count[i]))/255 * 10)/10;
-      std::cout << "This is the colour for cube: ";
-      std::cout << i  << std::endl;
-      std::cout << "Colour: "  << std::endl;
-      std::cout << g_current_stack_colours[i]  << std::endl;
-    }
-  }
-  g_check = false;
 
 
 
@@ -986,9 +995,7 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
 
 
 
-  std::vector<std_msgs::ColorRGBA> list_of_colours;
- 
-  list_of_colours = g_current_stack_colours;
+
   
   
   g_index_of_cubes_to_stack.clear();
@@ -1015,7 +1022,7 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   {
     for(int j = 0; j < g_oldcentroids.size(); j++)
       {
-        if(abs(list_of_colours[i].r - colors[j].r) <= 0.15 && abs(list_of_colours[i].g - colors[j].g) <= 0.3 && abs(list_of_colours[i].b - colors[j].b) <= 0.3)
+        if(abs(list_of_colours[i].r - colors[j].r) <= 0.3 && abs(list_of_colours[i].g - colors[j].g) <= 0.3 && abs(list_of_colours[i].b - colors[j].b) <= 0.3)
         {
           std::cout << "The Cubes matching the first request is cube : " << i << std::endl;
 
@@ -1676,7 +1683,7 @@ Cw3Solution::pickAndPlaceTask2()
         geometry_msgs::Point position;
         position.x = (round(g_oldcentroids[g_index_of_cubes_to_stack[i]].point.x * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
         position.y = (round(g_oldcentroids[g_index_of_cubes_to_stack[i]].point.y * pow(10.0f, (2.0))) / pow(10.0f, (2.0)));
-        position.z = 0.03;
+        position.z = 0.02;
 
         g_pick_object = std::to_string(i);
         g_pick_objects.push_back(g_pick_object);
@@ -1886,7 +1893,6 @@ Cw3Solution::cloudCallBackOne
         eu_distance = sqrt(pow((g_current_centroid.point.x - g_oldcentroids[stack_index].point.x), 2) + pow((g_current_centroid.point.y - g_oldcentroids[stack_index].point.y), 2));
         if (eu_distance < 0.04)
         {
-          ROS_ERROR ("YOU CANT SEE ME  ");
         
           for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
           {
@@ -2212,7 +2218,7 @@ Cw3Solution::segClusters (PointCPtr &in_cloud_ptr)
   
   //Minimum set so that half cut cubes are not classified as clusters
   g_ec.setMinClusterSize (200);
-  g_ec.setMaxClusterSize (20000);
+  g_ec.setMaxClusterSize (300000);
   g_ec.setSearchMethod (g_tree_ptr);
   g_ec.setInputCloud (in_cloud_ptr);
   g_ec.extract (g_cluster_indices);
