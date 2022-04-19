@@ -226,13 +226,7 @@ class Cw3Solution
 
     geometry_msgs::Quaternion
     orientation(geometry_msgs::Quaternion collision_orientation, float x, float y, float z, float w);
-      
-    /** \brief function to add floor and goal box collision objects to avoid collisions.
-      *
-      * \input[in] container to store origin of box at goal location
-      */
-    void
-    addFloorAndBoxCollisionObjects(geometry_msgs::PointStamped goal_loc);
+
 
     /** \brief MoveIt function for moving the move_group to the target position.
       *
@@ -315,24 +309,6 @@ class Cw3Solution
     applyPT (PointCPtr &in_cloud_ptr,
              PointCPtr &out_cloud_ptr);
 
-    /** \brief Apply Color filtering.
-      * 
-      * \input[in] in_cloud_ptr the input PointCloud2 pointer
-      * \input[out] out_cloud_ptr the output PointCloud2 pointer
-      */
-    void
-    applyCF (PointCPtr &in_cloud_ptr,
-             PointCPtr &out_cloud_ptr);
-
-
-    /** \brief Apply Black Color filtering.
-      * 
-      * \input[in] in_cloud_ptr the input PointCloud2 pointer
-      * \input[out] out_cloud_ptr the output PointCloud2 pointer
-      */
-    void
-    applyBCF (PointCPtr &in_cloud_ptr,
-             PointCPtr &out_cloud_ptr);
 
     /** \brief Apply Floor filtering.
       * 
@@ -579,8 +555,6 @@ class Cw3Solution
     
     // Comment these later ...
     std_msgs::ColorRGBA g_Color;
-    std_msgs::ColorRGBA g_Color_2;
-    std_msgs::ColorRGBA g_current_centroid_colour;
     std::vector<int> g_current_stack_cube_color_count;
 
     /** \brief Colours of all cubes in the stack */
@@ -596,16 +570,14 @@ class Cw3Solution
 
 
     geometry_msgs::PointStamped g_pt_world_lb;
-    geometry_msgs::PointStamped g_pt_camera_lb;
     geometry_msgs::PointStamped g_pt_world_ub;
-    geometry_msgs::PointStamped g_pt_camera_ub;
+
     bool g_check = false;
     bool g_check_task_2 = false;
     
     std::string g_pick_object = "object";
     std::vector<std::string> g_pick_objects;
     std::string g_collision_object = "object";
-    std::vector<std::string> g_collision_objects;
 
     float g_place_angle_offset_;
 
@@ -615,22 +587,14 @@ class Cw3Solution
 
 
     bool
-    pickAndPlaceTask2();
+    pickAndPlaceIndexedCubes();
 
-    geometry_msgs::Point g_cube_pick_origin;
-    geometry_msgs::Vector3 g_cube_pick_dimension;
-    geometry_msgs::Quaternion g_cube_pick_orientation;
 
     double eu_distance;
-    double eu_distance_scan;
 
 
     std::vector<double> g_yaw_list;
     
-    
-    
-    ros::NodeHandle node_handle;
-    ros::Publisher planning_scene_diff_publisher = node_handle.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
     std::vector<double> g_centroids_max_y_x;
     std::vector<double> g_centroids_max_x_y;
@@ -658,8 +622,6 @@ class Cw3Solution
     // this is used in defining the orientation of the box collision object
     geometry_msgs::Quaternion box_orientation;
 
-    
-    double height;
     std::vector<double> height_vector;
     int stack_index;
 
