@@ -168,6 +168,19 @@ class Cw3Solution
       *
       * ...
       */
+
+    void
+    scanEntireMat();
+    /** \brief function to scan the entire mat. Used in Task 3
+      *
+      * ...
+      */
+    void
+    scanFrontMat();
+    /** \brief function to scan the front of the mat. Used in Task 1 and 2
+      *
+      * ...
+      */
     void
     findCentroidsAtScanLocation();
 
@@ -290,6 +303,13 @@ class Cw3Solution
       */
     bool
     place(geometry_msgs::Point position);
+
+    /** \brief Function to pick and place all the cubes to create a stack.
+      * 
+      *  \output true if all cubes have been deposited as requested
+      */
+    bool
+    pickAndPlaceIndexedCubes();
     
     /** \brief Apply Voxel Grid filtering.
       * 
@@ -426,10 +446,10 @@ class Cw3Solution
     geometry_msgs::PointStamped g_current_centroid;
 
     /** \brief Max point of current cluster found */
-    geometry_msgs::Point g_current_centroid_max;
+    geometry_msgs::Point g_current_cluster_max;
 
     /** \brief Min point of current cluster found */
-    geometry_msgs::Point g_current_centroid_min;
+    geometry_msgs::Point g_current_cluster_min;
     
     /** \brief Stores number of cubes found in stack */
     int g_number_of_cubes_in_stack;
@@ -438,25 +458,39 @@ class Cw3Solution
     int g_number_of_cubes_in_recorded_stack;
 
     /** \brief Stores y coordinate corresponding to the max x bound of centroid */
-    double g_current_centroid_max_x_y;
+    double g_current_cluster_max_x_y;
 
     /** \brief Stores x coordinate corresponding to the max y bound of centroid */
-    double g_current_centroid_max_y_x;
+    double g_current_cluster_max_y_x;
 
 
-    /** \brief All centroids found */
+    /** \brief All visbile centroids found */
     std::vector<geometry_msgs::PointStamped> g_centroids;
 
     /** \brief Colours of all cubes in the stack */
     std::vector<std_msgs::ColorRGBA> g_current_stack_colours;
 
-    /** \brief All max points of centroids found */
-    std::vector<geometry_msgs::Point> g_centroids_max;
 
-    /** \brief All min points of centroids found */
-    std::vector<geometry_msgs::Point> g_centroids_min;
+    /** \brief All max points of visible centroids found */
+    std::vector<geometry_msgs::Point> g_clusters_max;
 
+    /** \brief All min points of visible centroids found */
+    std::vector<geometry_msgs::Point> g_clusters_min;
 
+    /** \brief Colours of all cubes in the stack */
+    std::vector<std_msgs::ColorRGBA> g_colors;
+
+    /** \brief Total number of points used to find colours of all cubes in the stack, used to find average colour value, used to find average rgb value */
+    std::vector<int> g_colors_count;
+
+    /** \brief Colour of current cube found */
+    std_msgs::ColorRGBA g_current_color;
+
+    /** \brief Total number of points used to find colour of current cube found, used to find average rgb value */
+    int g_current_color_count;
+
+    /** \brief Stores the total number of pixels for colours found for all the scanned cubes in the stack */
+    std::vector<int> g_current_stack_cube_color_count;
 
     /** \brief ROS pose publishers. */
     ros::Publisher g_pub_pose;
@@ -544,85 +578,105 @@ class Cw3Solution
 
     
     /** \brief Stores all max points of centroids found for the requested scan */
-    std::vector<geometry_msgs::Point> centroids_max;
+    std::vector<geometry_msgs::Point> clusters_max;
     
     /** \brief Stores all min points of centroids found for the requested scan */
-    std::vector<geometry_msgs::Point> centroids_min;
+    std::vector<geometry_msgs::Point> clusters_min;
 
 
-
-
-    
-    // Comment these later ...
-    std_msgs::ColorRGBA g_Color;
-    std::vector<int> g_current_stack_cube_color_count;
-
-    /** \brief Colours of all cubes in the stack */
-    std::vector<std_msgs::ColorRGBA> g_colors;
-    std::vector<int> g_colors_count;
-
-    std_msgs::ColorRGBA g_current_color;
-    int g_current_color_count;
-
+    /** \brief Stores all colours found for the scanned cubes */
     std::vector<std_msgs::ColorRGBA> colors;
+
+    /** \brief Stores the total number of pixels for colours found for all the scanned cubes */
     std::vector<int> colors_count;
 
 
+    /** \brief Stores the temperory rgba values of the cubes */
+    std_msgs::ColorRGBA g_Color;
 
+    /** \brief Sets the lower bound threshold for scanning points in the world frame */
     geometry_msgs::PointStamped g_pt_world_lb;
+    
+    /** \brief Sets the upper bound threshold for scanning points in the world frame */
     geometry_msgs::PointStamped g_pt_world_ub;
 
-    bool g_check = false;
-    bool g_check_task_2 = false;
-    
+
+    /** \brief Sets a flag to read the rgb values of points of a stack of cubes in the cloudCallbackOne function when required */
+    bool g_check_objects_stack = false;
+
+    /** \brief Sets a flag to read the rgb values of points of objects lying on the floor in the cloudCallbackOne function when required */
+    bool g_check_objects_floor = false;
+
+
+    /** \brief Stores the variable name of object that needs to be picked, to add a collision object once it has been deposited, to add them in the planning scene */
     std::string g_pick_object = "object";
-    std::vector<std::string> g_pick_objects;
+
+    /** \brief Stores the variable name of collision objects detected, to add them in the planning scene */
     std::string g_collision_object = "object";
 
+
+    /** \brief Stores the variable names of all objects that need to be picked, to add a collision object for each once it has been deposited, to add them in the planning scene */
+    std::vector<std::string> g_pick_objects;
+
+
+    /** \brief Stores the yaw value required to place objects in the requested location */
     float g_place_angle_offset_;
 
 
-    /** \brief Stores number of cubes found in Task 2 */
+    /** \brief Stores number of cubes found on the floor for task 2 and 3*/
     int g_size = 0;
 
-
-    bool
-    pickAndPlaceIndexedCubes();
-
-
+    /** \brief Stores the eucledian distance of a centroid found and a point of interest, to identify if the centroid lies at the point of interest*/
     double eu_distance;
 
-
+    /** \brief Stores the computed orientation for all the clusters found on the floor*/
     std::vector<double> g_yaw_list;
-    
 
-    std::vector<double> g_centroids_max_y_x;
-    std::vector<double> g_centroids_max_x_y;
-    std::vector<double> centroids_max_y_x;
-    std::vector<double> centroids_max_x_y;
+    /** \brief Stores the corresponding y value of all the visible clusters, to the maximum x value found, used to find the orientation of each cluster*/
+    std::vector<double> g_clusters_max_y_x;
 
+    /** \brief Stores the corresponding x value of all the visible clusters, to the maximum y value found, used to find the orientation of each cluster*/
+    std::vector<double> g_clusters_max_x_y;
+
+    /** \brief Stores the corresponding y value of all the clusters, to the maximum x value found, used to find the orientation of each cluster*/
+    std::vector<double> clusters_max_y_x;
+
+    /** \brief Stores the corresponding x value of all the clusters, to the maximum y value found, used to find the orientation of each cluster*/
+    std::vector<double> clusters_max_x_y;
+
+    /** \brief Stores the boolean result regarding if a picking task has been successful*/
     bool g_pick_success;
+    /** \brief Stores the boolean result regarding if a placing task has been successful*/
     bool g_place_success;
+    /** \brief Stores the boolean result regarding if a moving task has been successful*/
     bool g_move_success;
-    
-    std::vector<int> g_index_of_cubes_to_stack;
-    int g_num_of_cubes_to_stack;
 
-    std::vector<int> g_index_of_collision_objects;
-
-
-    geometry_msgs::Point g_target_point;
-
-    // this is used in defining the origin of the box collision object
+    /** \brief this is used in defining the origin of the box collision object*/
     geometry_msgs::Point box_origin;
 
-    // this is used in defining the dimension of the box collision object
+    /** \brief this is used in defining the dimension of the box collision object*/
     geometry_msgs::Vector3 box_dimension;
 
-    // this is used in defining the orientation of the box collision object
+    /** \brief this is used in defining the orientation of the box collision object*/
     geometry_msgs::Quaternion box_orientation;
 
+
+    /** \brief this is used to store the idices of the cubes found in order they need to be scanned*/
+    std::vector<int> g_index_of_cubes_to_stack;
+
+    /** \brief this is used to store the total number of cubes that need to be stacked*/
+    int g_num_of_cubes_to_stack;
+
+    /** \brief this is used to store the indices of all the objects found in the environment that are supposed to be collision object*/
+    std::vector<int> g_index_of_collision_objects;
+
+    /** \brief this is used to store the placing location of picked objects*/
+    geometry_msgs::Point g_target_point;
+
+    /** \brief this is used to store the height of all the clusters found in the environment*/
     std::vector<double> height_vector;
+
+    /** \brief this is used to store the index of the stack from all the clusters found while scanning the environment*/
     int stack_index;
 
 
