@@ -164,20 +164,29 @@ class Cw3Solution
     task3Callback(cw3_world_spawner::Task3Service::Request &request,
       cw3_world_spawner::Task3Service::Response &response);
 
-    /** \brief function to find and store centroid found during scanning
+
+    /** \brief Clearing the lists that store centroids and other information of any previous detected clusters from global variables.
       *
       * ...
       */
-
     void
-    scanEntireMat();
+    clearPreviousScanData()
+    
     /** \brief function to scan the entire mat. Used in Task 3
       *
       * ...
       */
     void
-    scanFrontMat();
+    scanEntireMat();
+
     /** \brief function to scan the front of the mat. Used in Task 1 and 2
+      *
+      * ...
+      */
+    void
+    scanFrontMat();
+
+    /** \brief function to find and store centroid found during scanning
       *
       * ...
       */
@@ -392,7 +401,7 @@ class Cw3Solution
       */
     void
     publishPose (geometry_msgs::PointStamped &cube_pt_msg);
-    
+
 
 
       

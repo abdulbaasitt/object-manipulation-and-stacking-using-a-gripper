@@ -98,15 +98,8 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   /* This service picks an object with a given pose and places it at a given pose */
 
 
-  // clearing the list that store centroids of any previous centroid values
-  centroids.clear();
-  clusters_max.clear();
-  clusters_min.clear();
-  clusters_max_y_x.clear();
-  clusters_max_x_y.clear();
-  colors.clear();
-  colors_count.clear();
-
+  // clearing the list that store centroids of any previous centroid values from global variables
+  clearPreviousScanData();
 
   
   int size = 0;
@@ -114,9 +107,10 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
   g_number_of_cubes_in_recorded_stack = 0;
   g_check_objects_stack = true;
 
+  // This function scans a predefined region and stores essential data from the scan in respective global variables.
   scanFrontMat();
 
-  // FINDING ORIENTATION:0
+  // FINDING ORIENTATION of the first centroid found (as only one object present in the environment)
   yaw = atan2(((clusters_max[0].x) - (clusters_max_y_x[0])),((clusters_max[0].y) - (clusters_max_x_y[0])));
 
   std::cout << "The angle is: "  << std::endl;
@@ -150,8 +144,6 @@ Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &request,
         std::cout << g_number_of_cubes_in_recorded_stack  << std::endl;
       }
   }
-
-
 
 
   geometry_msgs::Pose check_col;
@@ -235,14 +227,8 @@ Cw3Solution::task2Callback(cw3_world_spawner::Task2Service::Request &request,
   
   */
 
-  // clearing the list that store centroids of any previous centroid values
-  centroids.clear();
-  clusters_max.clear();
-  clusters_min.clear();
-  clusters_max_y_x.clear();
-  clusters_max_x_y.clear();
-  colors.clear();
-  colors_count.clear();
+  // clearing the list that store centroids of any previous centroid values from global variables
+  clearPreviousScanData();
 
 
   
@@ -381,14 +367,8 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
   /* This service ...
   */
 
-  // clearing the list that store centroids of any previous centroid values
-  centroids.clear();
-  clusters_max.clear();
-  clusters_min.clear();
-  clusters_max_y_x.clear();
-  clusters_max_x_y.clear();
-  colors.clear();
-  colors_count.clear();
+  // clearing the list that store centroids of any previous centroid values from global variables
+  clearPreviousScanData();
 
   // Scan the entire mat and store the centroids present
   scanEntireMat();
@@ -670,6 +650,20 @@ Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &request,
 
 ////////////////////////////////////////////////////////////////////////////////
 void
+Cw3Solution::clearPreviousScanData()
+{
+  // Clearing the lists that store centroids and other information of any previous detected clusters from global variables.
+  centroids.clear();
+  clusters_max.clear();
+  clusters_min.clear();
+  clusters_max_y_x.clear();
+  clusters_max_x_y.clear();
+  colors.clear();
+  colors_count.clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void
 Cw3Solution::scanFrontMat()
 {
   //initializing variable to scan an area of the robot arm environment
@@ -705,6 +699,7 @@ Cw3Solution::scanFrontMat()
     y_thrs_min -= 0.30;
   }
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 void
 Cw3Solution::scanEntireMat()
