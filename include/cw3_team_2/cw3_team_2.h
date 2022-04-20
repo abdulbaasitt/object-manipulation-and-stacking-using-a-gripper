@@ -170,7 +170,7 @@ class Cw3Solution
       * ...
       */
     void
-    clearPreviousScanData()
+    clearPreviousScanData();
     
     /** \brief function to scan the entire mat. Used in Task 3
       *
