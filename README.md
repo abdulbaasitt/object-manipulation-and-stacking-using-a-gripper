@@ -1,7 +1,9 @@
 # CW3 - Team 2
 ----------------- 
 
-This is a project focused on **...**
+This is a project focused on **Making a Pile of Objects, in Gazebo, using MoveIt! and PCL**
+It is based on **Picking, placing, identifying, and localising simple objects.**
+The research work in completing this task is documented in a separate Research Report.
 
 It is authored by **Ahmed Adamjee, Ikedinaekpere Kennedy Dike, and Abdulbaasit Sanusi** and is licensed under the MIT License, see below:
 
@@ -64,16 +66,21 @@ rosservice call /task X
 ## Time and percentage spent on each task by each student:
 
 ### Task 1
-#### Ahmed Adamjee -                x hours; 33%
-#### Ikedinaekpere Kennedy Dike -   x hours; 33%
-#### Abdulbaasit Sanusi -           x hours; 34%
+#### Ahmed Adamjee -                14 hours; 33%
+#### Ikedinaekpere Kennedy Dike -   14 hours; 33%
+#### Abdulbaasit Sanusi -           14 hours; 34%
 
 ### Task 2
-#### Ahmed Adamjee -                x hours; 34%
-#### Ikedinaekpere Kennedy Dike -   x hours; 33%
-#### Abdulbaasit Sanusi -           x hours; 33%
+#### Ahmed Adamjee -                18 hours; 34%
+#### Ikedinaekpere Kennedy Dike -   18 hours; 33%
+#### Abdulbaasit Sanusi -           18 hours; 33%
 
 ### Task 3
-#### Ahmed Adamjee -                x hours; 33%
-#### Ikedinaekpere Kennedy Dike -   x hours; 34%
-#### Abdulbaasit Sanusi -           x hours; 33%
+#### Ahmed Adamjee -                6 hours; 33%
+#### Ikedinaekpere Kennedy Dike -   6 hours; 34%
+#### Abdulbaasit Sanusi -           6 hours; 33%
+
+### Report
+#### Ahmed Adamjee -                18 hours; 34%
+#### Ikedinaekpere Kennedy Dike -   18 hours; 33%
+#### Abdulbaasit Sanusi -           18 hours; 33%
