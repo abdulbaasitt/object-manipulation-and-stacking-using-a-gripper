@@ -144,7 +144,6 @@ bool Cw3Solution::task1Callback(cw3_world_spawner::Task1Service::Request &reques
 
   moveArm(check_col);
 
-  // storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
   g_sub_cloud;
 
   // If a stack is found, find the average RGB values for each cube
@@ -394,7 +393,6 @@ bool Cw3Solution::task3Callback(cw3_world_spawner::Task3Service::Request &reques
 
   bool check_col_success = moveArm(check_col);
 
-  // storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
   g_sub_cloud;
 
   std::vector<std_msgs::ColorRGBA> list_of_colours;
@@ -549,7 +547,7 @@ void Cw3Solution::scanFrontMat()
     // function call to move arm towards scan coordinates
     bool scan1_success = moveArm(scan1);
 
-    // storing the centroids founds in scan area to the initialized centroids variable (Change comment ...)
+    // storing the centroids founds in scan area to the initialized centroids variable
     findCentroidsAtScanLocation();
 
     // updating the scan area for the next iteration
@@ -746,12 +744,11 @@ void Cw3Solution::scanEntireMat()
 
 void Cw3Solution::findCentroidsAtScanLocation()
 {
-  /*this function is used to find centroids of object particular colour within
+  /*this function is used to find centroids and the min and max x,y coordinates of object particular colour within
    * a particular scan area
-   * If centroid is found, it is appended to the centroids list created
-   * and this is then returned
+   * When they are found, they are appended to their respective lists
+   * and they are returned
    */
-  /* Change function name and description, also in header, as even min and max values are found now, also i do not parse anything inside anymore ...*/
 
   geometry_msgs::PointStamped centroid;
   geometry_msgs::Point cluster_max;
@@ -804,7 +801,6 @@ void Cw3Solution::findCentroidsAtScanLocation()
         // appendy coordinate of max x in cluster to the list
         clusters_max_x_y.push_back(cluster_max_x_y);
 
-        // Document better ...
         // append color of current cluster found to the list
         colors.push_back(color);
         // append number of pixels of current cluster found to the list
@@ -1413,17 +1409,16 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
     // finding min and max depth points of the cluster
     PointT minPt, maxPt;
     pcl::getMinMax3D(cloud_world, minPt, maxPt);
-
     g_current_cluster_max.x = maxPt.x;
     g_current_cluster_max.y = maxPt.y;
     g_current_cluster_max.z = maxPt.z;
-
     g_current_cluster_min.x = minPt.x;
     g_current_cluster_min.y = minPt.y;
     g_current_cluster_min.z = minPt.z;
 
     g_number_of_cubes_in_stack = round(((g_current_cluster_max.z) - 0.017) / 0.04); // Calculate number of cubes in the stack
 
+    // Initialising variables
     g_current_cluster_max_x_y = 0.0;
     g_current_cluster_max_y_x = 0.0;
 
@@ -1433,7 +1428,6 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
     g_current_color.r = 0;
     g_current_color.g = 0;
     g_current_color.b = 0;
-
     g_current_color_count = 0;
 
     // Iterate through every point in a cluster
@@ -1449,21 +1443,23 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
         g_current_cluster_max_y_x = cloud_world[nIndex].x;
       }
 
-      if ((g_number_of_cubes_in_recorded_stack > 0) && (g_check_objects_stack == true)) // Find the colours of the cubes in the stack
+      if ((g_number_of_cubes_in_recorded_stack > 0) && (g_check_objects_stack == true))
       {
+        // Calculating the Euclidean distance between the current centroid and the centroid of the stack
         eu_distance = sqrt(pow((g_current_centroid.point.x - g_oldcentroids[stack_index].point.x), 2) + pow((g_current_centroid.point.y - g_oldcentroids[stack_index].point.y), 2));
         if (eu_distance < 0.04)
         {
 
           for (int i = 0; i < g_number_of_cubes_in_recorded_stack; i++)
           {
-
+            // Creating the lower bound
             g_pt_world_lb.header.frame_id = "panda_link0";
             g_pt_world_lb.header.stamp = ros::Time(0);
             g_pt_world_lb.point.x = -2;
             g_pt_world_lb.point.y = -2;
             g_pt_world_lb.point.z = ((0.03) + ((i)*0.04));
 
+            // Creating the upper bound
             g_pt_world_ub.header.frame_id = "panda_link0";
             g_pt_world_ub.header.stamp = ros::Time(0);
             g_pt_world_ub.point.x = 2;
@@ -1471,7 +1467,7 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
             g_pt_world_ub.point.z = (((i + 1) * 0.04));
 
             if (((cloud_world[nIndex].z) < g_pt_world_ub.point.z) && ((cloud_world[nIndex].z) > g_pt_world_lb.point.z))
-            {
+            { // Find the colours of the cubes on the stack by adding the RGB values of all the points in the cluster
               g_current_stack_colours[i].r = g_current_stack_colours[i].r + cloud_cluster->points[nIndex].r;
               g_current_stack_colours[i].g = g_current_stack_colours[i].g + cloud_cluster->points[nIndex].g;
               g_current_stack_colours[i].b = g_current_stack_colours[i].b + cloud_cluster->points[nIndex].b;
@@ -1482,7 +1478,7 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
         }
       }
 
-      if (g_check_objects_floor == true) // Find the colours of the cubes on the floor
+      if (g_check_objects_floor == true) // Find the colours of the cubes on the floor by adding the RGB values of all the points in the cluster
       {
 
         g_current_color.r = g_current_color.r + cloud_cluster->points[nIndex].r;
@@ -1493,13 +1489,14 @@ void Cw3Solution::cloudCallBackOne(const sensor_msgs::PointCloud2ConstPtr &cloud
       }
     }
 
+    // Store the centroids and the min and max values of the cluster to their respective clusters
     g_centroids.push_back(g_current_centroid);
     g_clusters_max.push_back(g_current_cluster_max);
     g_clusters_min.push_back(g_current_cluster_min);
     g_clusters_max_y_x.push_back(g_current_cluster_max_y_x);
     g_clusters_max_x_y.push_back(g_current_cluster_max_x_y);
 
-    if (g_check_objects_floor == true) // Store the colours of the cubes on the floor
+    if (g_check_objects_floor == true) // Store the colours of the cubes on the floor when set to true
     {
       g_colors.push_back(g_current_color);
       g_colors_count.push_back(g_current_color_count);
@@ -1534,9 +1531,7 @@ void Cw3Solution::applyFF(PointCPtr &in_cloud_ptr,
 {
 
   /* This function is used to apply a colour filter to a point cloud to remove the floor*/
-  /* Remove g_fseg later if not needed ...*/
 
-  // change ...
   geometry_msgs::PointStamped pt_camera;
   geometry_msgs::PointStamped pt_world;
   double lb_x = 0.0;
